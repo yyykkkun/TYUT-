@@ -1,0 +1,160 @@
+package zuoye;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+class User {
+    private String username;
+    private String password;
+    private String info; //
+
+    public User(String username, String password, String info) {
+        this.username = username;
+        this.password = password;
+        this.info = info;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "username='" + username + '\'' +
+                ", info='" + info + '\'' +
+                '}';
+    }
+}
+class UserManager {
+    private List<User> users = new ArrayList<>();
+
+    public void register(User user) {
+        for (User existingUser : users) {
+            if (existingUser.getUsername().equals(user.getUsername())) {
+                System.out.println("用户已存在！");
+                return;
+            }
+        }
+        users.add(user);
+        System.out.println("用户注册成功");
+    }
+
+    public User login(String username, String password) {
+        for (User user : users) {
+            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+                return user;
+            }
+        }
+        System.out.println("用户名或密码错误");
+        return null;
+    }
+    public void listUsers() {
+        if (users.isEmpty()) {
+            System.out.println("没有用户");
+        } else {
+            for (User user : users) {
+                System.out.println(user);
+            }
+        }
+    }
+
+    public void deleteUser(String username) {
+        users.removeIf(user -> user.getUsername().equals(username));
+        System.out.println("用户删除");
+    }
+
+    public void updateUser(String username, String newInfo) {
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                user.setInfo(newInfo);
+                System.out.println("用户上传成功");
+                return;
+            }
+        }
+        System.out.println("未找到用户");
+    }
+}
+ class ManagementSystem {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        UserManager userManager = new UserManager();
+        boolean loggedIn = false;
+        User currentUser = null;
+
+        while (true) {
+            if (!loggedIn) {
+                System.out.println("1. 注册");
+                System.out.println("2. 登录");
+                System.out.print("选择一个按钮: ");
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                if (choice == 1) {
+                    System.out.print("登陆账号: ");
+                    String username = scanner.nextLine();
+                    System.out.print("登录密码: ");
+                    String password = scanner.nextLine();
+                    System.out.print("输入用户信息");
+                    String info = scanner.nextLine();
+
+                    User newUser = new User(username, password, info);
+                    userManager.register(newUser);
+                } else if (choice == 2) {
+                    System.out.print("登录账号: ");
+                    String username = scanner.nextLine();
+                    System.out.print("登录密码: ");
+                    String password = scanner.nextLine();
+
+                    currentUser = userManager.login(username, password);
+                    if (currentUser != null) {
+                        loggedIn = true;
+                    }
+                } else {
+                    System.out.println("请重试");
+                }
+            } else {
+                System.out.println("3. 查找用户");
+                System.out.println("4. 删除用户");
+                System.out.println("5. 上传用户信息");
+                System.out.println("6. 退出");
+                System.out.print("选择一个按钮: ");
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                if (choice == 3) {
+                    userManager.listUsers();
+                } else if (choice == 4) {
+                    System.out.print("输入删除用户名: ");
+                    String username = scanner.nextLine();
+                    userManager.deleteUser(username);
+                } else if (choice == 5) {
+                    System.out.print("输入上传用户: ");
+                    String username = scanner.nextLine();
+                    System.out.print("输入新信息: ");
+                    String newInfo = scanner.nextLine();
+                    userManager.updateUser(username, newInfo);
+                } else if (choice == 6) {
+                    loggedIn = false;
+                    currentUser = null;
+                    System.out.println("退出成功");
+                } else {
+                    System.out.println("请重试");
+                }
+            }
+        }
+    }
+}
