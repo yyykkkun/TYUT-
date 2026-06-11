@@ -105,10 +105,14 @@ function search() {
         <p class="eyebrow">综合电商买家端 MVP</p>
         <h1>校园优选商城</h1>
         <p>商品浏览、筛选、加购、下单、模拟支付、物流与评价的前端闭环演示。</p>
-        <form class="search-bar" @submit.prevent="search">
-          <input v-model="keyword" placeholder="搜索蓝莓、耳机、收纳盒" />
-          <button class="btn primary" type="submit">搜索</button>
-        </form>
+        <a-input-search
+          v-model:value="keyword"
+          placeholder="搜索蓝莓、耳机、收纳盒"
+          enter-button="搜索"
+          size="large"
+          @search="search"
+          style="max-width: 480px; margin-top: 24px;"
+        />
       </div>
     </section>
 

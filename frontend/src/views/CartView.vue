@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { DeleteOutlined } from '@ant-design/icons-vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useCartStore } from '@/stores/cart'
 
@@ -11,10 +12,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="stack-page">
-    <div class="page-title">
-      <h1>购物车</h1>
-      <p>勾选商品、修改数量后进入结算。</p>
+  <main class="stack-page" style="max-width: 1180px; margin: 0 auto; padding: 40px 20px;">
+    <div class="page-title" style="margin-bottom: 32px;">
+      <h1 style="font-size: 2rem; margin-bottom: 8px;">购物车</h1>
+      <p style="color: #8c8c8c; margin: 0;">勾选商品、修改数量后进入结算。</p>
     </div>
 
     <EmptyState
@@ -24,43 +25,51 @@ onMounted(() => {
       action-to="/products"
     />
 
-    <section v-else class="cart-layout">
-      <div class="line-list">
-        <article v-for="item in cart.detailedItems" :key="item.id" class="line-item">
-          <input type="checkbox" :checked="item.selected" @change="cart.toggleSelected(item.id)" />
-          <img :src="item.product?.image || ''" :alt="item.product?.title || item.productId" />
-          <div>
-            <h3>{{ item.product?.title || item.productId }}</h3>
-            <p>{{ item.spec }} · ￥{{ item.product?.price ?? '--' }}</p>
-          </div>
-          <input
-            class="small-input"
-            :value="item.quantity"
-            type="number"
-            min="1"
-            @input="cart.updateQuantity(item.id, Number(($event.target as HTMLInputElement).value))"
+    <section v-else class="cart-layout" style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: flex-start;">
+      <div class="line-list" style="display: flex; flex-direction: column; gap: 16px;">
+        <article v-for="item in cart.detailedItems" :key="item.id" class="line-item" style="display: flex; align-items: center; gap: 16px; background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+          <a-checkbox
+            :checked="item.selected"
+            @change="cart.toggleSelected(item.id)"
           />
-          <strong>￥{{ (item.product?.price ?? 0) * item.quantity || 0 }}</strong>
-          <button class="icon-btn" type="button" title="删除" @click="cart.removeItem(item.id)">
-            ×
-          </button>
+          <img :src="item.product?.image || ''" :alt="item.product?.title || item.productId" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;" />
+          <div style="flex: 1; min-width: 0;">
+            <h3 style="margin: 0 0 8px; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ item.product?.title || item.productId }}</h3>
+            <p style="margin: 0; color: #8c8c8c;">{{ item.spec }} · <span style="color: var(--price);">￥{{ item.product?.price ?? '--' }}</span></p>
+          </div>
+          <a-input-number
+            :value="item.quantity"
+            :min="1"
+            style="width: 80px;"
+            @change="(val: any) => cart.updateQuantity(item.id, Number(val))"
+          />
+          <strong style="width: 100px; text-align: right; color: var(--price); font-size: 1.1rem;">￥{{ ((item.product?.price ?? 0) * item.quantity).toFixed(2) }}</strong>
+          <a-button type="text" danger @click="cart.removeItem(item.id)">
+            <template #icon><DeleteOutlined /></template>
+          </a-button>
         </article>
       </div>
 
-      <aside class="summary-panel">
-        <h2>结算汇总</h2>
-        <p>
-          <span>已选数量</span><strong>{{ cart.selectedCount }}</strong>
-        </p>
-        <p>
-          <span>商品小计</span><strong>￥{{ cart.subtotal }}</strong>
-        </p>
-        <RouterLink
-          class="btn primary block"
-          :class="{ disabled: !cart.selectedCount }"
-          to="/checkout"
-          >去结算</RouterLink
+      <aside class="summary-panel" style="background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 24px;">
+        <h2 style="margin-bottom: 24px; font-size: 1.25rem;">结算汇总</h2>
+        <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #8c8c8c;">已选数量</span><strong style="font-size: 1.1rem;">{{ cart.selectedCount }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #8c8c8c;">商品小计</span><strong style="color: var(--price); font-size: 1.5rem;">￥{{ cart.subtotal.toFixed(2) }}</strong>
+          </div>
+        </div>
+        <a-button
+          type="primary"
+          size="large"
+          block
+          :disabled="!cart.selectedCount"
+          @click="$router.push('/checkout')"
+          style="height: 48px; font-size: 1.1rem; border-radius: 8px;"
         >
+          去结算
+        </a-button>
       </aside>
     </section>
   </main>

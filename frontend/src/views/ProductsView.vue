@@ -30,7 +30,7 @@ onUnmounted(() => {
   gridCtx?.revert()
 })
 
-// 仅同步筛选条件到 URL（避免 deep watch 触发不必要的 router.replace）
+// 仅同步筛选条件到 URL
 watch(
   () => ({ ...productStore.filters }),
   (filters) => {
@@ -92,90 +92,89 @@ function runGridMotion() {
 </script>
 
 <template>
-  <main ref="pageRef" class="catalog-page">
-    <aside class="filter-panel">
-      <h2>商品筛选</h2>
-      <label>
-        关键词
-        <input
-          v-model="productStore.filters.keyword"
-          placeholder="搜索商品"
-          @input="productStore.filters.page = 1"
-        />
-      </label>
-      <label>
-        分类
-        <select v-model="productStore.filters.category" @change="productStore.filters.page = 1">
-          <option value="">全部分类</option>
-          <option
-            v-for="category in productStore.categories"
-            :key="category.id"
-            :value="category.id"
-          >
-            {{ category.name }}
-          </option>
-        </select>
-      </label>
-      <label>
-        品牌
-        <select v-model="productStore.filters.brand" @change="productStore.filters.page = 1">
-          <option value="">全部品牌</option>
-          <option v-for="brand in productStore.brands" :key="brand" :value="brand">
-            {{ brand }}
-          </option>
-        </select>
-      </label>
-      <label>
-        库存
-        <select v-model="productStore.filters.stock" @change="productStore.filters.page = 1">
-          <option value="">全部库存</option>
-          <option value="in">仅看有货</option>
-          <option value="out">暂时缺货</option>
-        </select>
-      </label>
-      <label>
-        城市
-        <select v-model="productStore.filters.city" @change="productStore.filters.page = 1">
-          <option value="">全部城市</option>
-          <option v-for="city in productStore.cities" :key="city" :value="city">{{ city }}</option>
-        </select>
-      </label>
-      <div class="split-inputs">
-        <label>
-          最低价
-          <input
-            v-model.number="productStore.filters.minPrice"
-            type="number"
-            min="0"
-            @input="productStore.filters.page = 1"
+  <main ref="pageRef" class="catalog-page" style="display: flex; gap: 24px;">
+    <aside class="filter-panel" style="width: 280px; flex-shrink: 0; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); align-self: flex-start; position: sticky; top: 24px;">
+      <h2 style="margin-bottom: 24px; font-size: 1.25rem;">商品筛选</h2>
+      <a-form layout="vertical">
+        <a-form-item label="关键词">
+          <a-input
+            v-model:value="productStore.filters.keyword"
+            placeholder="搜索商品"
+            allow-clear
+            @change="productStore.filters.page = 1"
           />
-        </label>
-        <label>
-          最高价
-          <input
-            v-model.number="productStore.filters.maxPrice"
-            type="number"
-            min="0"
-            @input="productStore.filters.page = 1"
-          />
-        </label>
-      </div>
+        </a-form-item>
+        <a-form-item label="分类">
+          <a-select v-model:value="productStore.filters.category" style="width: 100%" @change="productStore.filters.page = 1">
+            <a-select-option value="">全部分类</a-select-option>
+            <a-select-option
+              v-for="category in productStore.categories"
+              :key="category.id"
+              :value="category.id"
+            >
+              {{ category.name }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="品牌">
+          <a-select v-model:value="productStore.filters.brand" style="width: 100%" @change="productStore.filters.page = 1">
+            <a-select-option value="">全部品牌</a-select-option>
+            <a-select-option v-for="brand in productStore.brands" :key="brand" :value="brand">
+              {{ brand }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="库存">
+          <a-select v-model:value="productStore.filters.stock" style="width: 100%" @change="productStore.filters.page = 1">
+            <a-select-option value="">全部库存</a-select-option>
+            <a-select-option value="in">仅看有货</a-select-option>
+            <a-select-option value="out">暂时缺货</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="城市">
+          <a-select v-model:value="productStore.filters.city" style="width: 100%" @change="productStore.filters.page = 1">
+            <a-select-option value="">全部城市</a-select-option>
+            <a-select-option v-for="city in productStore.cities" :key="city" :value="city">
+              {{ city }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="价格区间">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <a-input-number
+              v-model:value="productStore.filters.minPrice"
+              :min="0"
+              style="width: 100%"
+              placeholder="最低价"
+              @change="productStore.filters.page = 1"
+            />
+            <span>-</span>
+            <a-input-number
+              v-model:value="productStore.filters.maxPrice"
+              :min="0"
+              style="width: 100%"
+              placeholder="最高价"
+              @change="productStore.filters.page = 1"
+            />
+          </div>
+        </a-form-item>
+      </a-form>
     </aside>
 
-    <section class="catalog-content">
-      <div class="toolbar">
+    <section class="catalog-content" style="flex: 1; min-width: 0;">
+      <div class="toolbar" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 24px;">
         <div>
-          <h1>商品列表</h1>
-          <p>共 {{ productStore.filteredProducts.length }} 件商品</p>
+          <h1 style="margin: 0; font-size: 1.5rem; line-height: 1.2;">商品列表</h1>
+          <p style="margin: 4px 0 0; color: #8c8c8c;">共 {{ productStore.filteredProducts.length }} 件商品</p>
         </div>
-        <select v-model="productStore.filters.sort">
-          <option value="composite">综合排序</option>
-          <option value="priceAsc">价格从低到高</option>
-          <option value="priceDesc">价格从高到低</option>
-          <option value="sales">销量优先</option>
-          <option value="popularity">人气优先</option>
-          <option value="latest">最新上架</option>
-        </select>
+        <a-select v-model:value="productStore.filters.sort" style="width: 160px;">
+          <a-select-option value="composite">综合排序</a-select-option>
+          <a-select-option value="priceAsc">价格从低到高</a-select-option>
+          <a-select-option value="priceDesc">价格从高到低</a-select-option>
+          <a-select-option value="sales">销量优先</a-select-option>
+          <a-select-option value="popularity">人气优先</a-select-option>
+          <a-select-option value="latest">最新上架</a-select-option>
+        </a-select>
       </div>
 
       <div v-if="productStore.pagedProducts.length" class="product-grid">
@@ -192,23 +191,22 @@ function runGridMotion() {
         action-to="/products"
       />
 
-      <div class="pagination">
-        <button
-          class="btn"
-          :disabled="productStore.filters.page <= 1"
-          @click="productStore.filters.page--"
-        >
-          上一页
-        </button>
-        <span>{{ productStore.filters.page }} / {{ productStore.totalPages }}</span>
-        <button
-          class="btn"
-          :disabled="productStore.filters.page >= productStore.totalPages"
-          @click="productStore.filters.page++"
-        >
-          下一页
-        </button>
+      <div class="pagination" style="margin-top: 32px; display: flex; justify-content: center;">
+        <a-pagination
+          v-model:current="productStore.filters.page"
+          :total="productStore.filteredProducts.length"
+          :page-size="12"
+          show-less-items
+        />
       </div>
     </section>
   </main>
 </template>
+
+<style scoped>
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+</style>

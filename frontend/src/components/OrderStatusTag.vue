@@ -12,8 +12,16 @@ const labels: Record<OrderStatus, string> = {
   completed: '已完成',
   cancelled: '已取消',
 }
+
+const colors: Record<OrderStatus, string> = {
+  pending_payment: 'warning',
+  paid: 'processing',
+  shipping: 'processing',
+  completed: 'success',
+  cancelled: 'default',
+}
 </script>
 
 <template>
-  <span class="status-tag" :class="status">{{ labels[status] }}</span>
+  <a-tag :color="colors[status]">{{ labels[status] }}</a-tag>
 </template>

@@ -23,6 +23,44 @@ async function quickAdd(e: Event) {
   const button = e.currentTarget as HTMLElement
   const firstSpec = props.product.specs[0]
   if (!firstSpec || props.product.stock <= 0) return
+  
+  // Animation setup
+  const card = cardRef.value
+  const img = card?.querySelector('img')
+  const cartIcon = document.getElementById('cart-icon')
+  
+  if (img && cartIcon && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const imgRect = img.getBoundingClientRect()
+    const cartRect = cartIcon.getBoundingClientRect()
+    
+    const clone = img.cloneNode(true) as HTMLImageElement
+    Object.assign(clone.style, {
+      position: 'fixed',
+      top: `${imgRect.top}px`,
+      left: `${imgRect.left}px`,
+      width: `${imgRect.width}px`,
+      height: `${imgRect.height}px`,
+      zIndex: '1000',
+      pointerEvents: 'none',
+      borderRadius: '8px',
+      opacity: '0.8'
+    })
+    document.body.appendChild(clone)
+    
+    gsap.to(clone, {
+      x: cartRect.left - imgRect.left + (cartRect.width / 2) - (imgRect.width / 2),
+      y: cartRect.top - imgRect.top + (cartRect.height / 2) - (imgRect.height / 2),
+      scale: 0.1,
+      opacity: 0,
+      duration: 0.75,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        document.body.removeChild(clone)
+        gsap.fromTo(cartIcon, { scale: 1 }, { scale: 1.3, duration: 0.15, yoyo: true, repeat: 1 })
+      }
+    })
+  }
+
   adding.value = true
   await cart.addItem(props.product.id, firstSpec, 1)
   adding.value = false
@@ -66,20 +104,22 @@ function leaveCard(e: MouseEvent) {
         </div>
         <h3>{{ product.title }}</h3>
         <p>{{ product.subtitle }}</p>
-        <div class="tag-row">
-          <span v-for="tag in product.tags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
+        <div class="tag-row" style="margin-bottom: 8px;">
+          <a-tag v-for="tag in product.tags.slice(0, 3)" :key="tag" color="blue">{{ tag }}</a-tag>
         </div>
-        <div class="product-card__footer">
-          <strong>￥{{ product.price }}</strong>
-          <span>已售 {{ product.sales }}</span>
-          <button
-            class="btn small"
-            type="button"
-            :disabled="product.stock <= 0 || adding"
+        <div class="product-card__footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+          <div style="display: flex; flex-direction: column;">
+            <strong style="color: var(--price); font-size: 1.25rem;">￥{{ product.price }}</strong>
+            <span style="color: #8c8c8c; font-size: 0.8rem;">已售 {{ product.sales }}</span>
+          </div>
+          <a-button
+            type="primary"
+            :disabled="product.stock <= 0"
+            :loading="adding"
             @click="quickAdd"
           >
-            {{ product.stock <= 0 ? '缺货' : adding ? '...' : '加入购物车' }}
-          </button>
+            {{ product.stock <= 0 ? '缺货' : '加购' }}
+          </a-button>
         </div>
       </div>
     </a>

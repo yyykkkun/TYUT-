@@ -70,110 +70,68 @@ async function doRegister() {
 <template>
   <main class="auth-page">
     <section class="auth-panel">
-      <p class="eyebrow">校园优选商城</p>
+      <h2 style="text-align: center; margin-bottom: 24px;">校园优选商城</h2>
 
-      <!-- 登录 / 注册 切换 -->
-      <div class="tab-row">
-        <button :class="{ active: tab === 'login' }" @click="tab = 'login'">登录</button>
-        <button :class="{ active: tab === 'register' }" @click="tab = 'register'">注册</button>
-      </div>
+      <a-alert v-if="errorMsg" :message="errorMsg" type="error" show-icon style="margin-bottom: 24px;" />
 
-      <!-- 错误提示 -->
-      <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
+      <a-tabs v-model:activeKey="tab" centered>
+        <a-tab-pane key="login" tab="登录">
+          <a-form layout="vertical" @finish="doLogin">
+            <a-form-item label="手机号 / 邮箱">
+              <a-input v-model:value="loginAccount" size="large" placeholder="demo@mall.test" />
+            </a-form-item>
+            <a-form-item label="密码">
+              <a-input-password v-model:value="loginPassword" size="large" placeholder="输入密码" />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+                登录
+              </a-button>
+            </a-form-item>
+            <div style="text-align: center; color: #8c8c8c;">演示账号：demo@mall.test / 123456</div>
+          </a-form>
+        </a-tab-pane>
 
-      <!-- ====== 登录表单 ====== -->
-      <form v-if="tab === 'login'" class="form-grid" @submit.prevent="doLogin">
-        <label>
-          手机号 / 邮箱
-          <input v-model="loginAccount" autocomplete="username" placeholder="demo@mall.test" />
-        </label>
-        <label>
-          密码
-          <input
-            v-model="loginPassword"
-            type="password"
-            autocomplete="current-password"
-            placeholder="输入密码"
-          />
-        </label>
-        <button class="btn primary" type="submit" :disabled="submitting">
-          {{ submitting ? '登录中...' : '登录' }}
-        </button>
-        <p class="hint">演示账号：demo@mall.test / 123456</p>
-      </form>
-
-      <!-- ====== 注册表单 ====== -->
-      <form v-if="tab === 'register'" class="form-grid" @submit.prevent="doRegister">
-        <label>
-          昵称
-          <input v-model="regNickname" autocomplete="nickname" placeholder="给自己取个名字" />
-        </label>
-        <label>
-          手机号
-          <input v-model="regPhone" autocomplete="tel" placeholder="用于登录和收货" />
-        </label>
-        <label>
-          密码
-          <input
-            v-model="regPassword"
-            type="password"
-            autocomplete="new-password"
-            placeholder="至少 6 位"
-          />
-        </label>
-        <label>
-          确认密码
-          <input
-            v-model="regConfirm"
-            type="password"
-            autocomplete="new-password"
-            placeholder="再次输入密码"
-          />
-        </label>
-        <button class="btn primary" type="submit" :disabled="submitting">
-          {{ submitting ? '注册中...' : '注册并登录' }}
-        </button>
-      </form>
+        <a-tab-pane key="register" tab="注册">
+          <a-form layout="vertical" @finish="doRegister">
+            <a-form-item label="昵称">
+              <a-input v-model:value="regNickname" size="large" placeholder="给自己取个名字" />
+            </a-form-item>
+            <a-form-item label="手机号">
+              <a-input v-model:value="regPhone" size="large" placeholder="用于登录和收货" />
+            </a-form-item>
+            <a-form-item label="密码">
+              <a-input-password v-model:value="regPassword" size="large" placeholder="至少 6 位" />
+            </a-form-item>
+            <a-form-item label="确认密码">
+              <a-input-password v-model:value="regConfirm" size="large" placeholder="再次输入密码" />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+                注册并登录
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+      </a-tabs>
     </section>
   </main>
 </template>
 
 <style scoped>
-.tab-row {
+.auth-page {
   display: flex;
-  gap: 0;
-  margin-bottom: 1.25rem;
-  border-bottom: 2px solid var(--border, #e5e7eb);
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 150px);
+  padding: 40px 20px;
 }
-.tab-row button {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s;
-}
-.tab-row button.active {
-  color: var(--primary, #4f46e5);
-  border-bottom-color: var(--primary, #4f46e5);
-}
-.error-msg {
-  background: #fef2f2;
-  color: #dc2626;
-  padding: 0.6rem 0.9rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
-.hint {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  text-align: center;
-  margin: 0;
+.auth-panel {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  padding: 40px 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 </style>

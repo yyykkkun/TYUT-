@@ -167,10 +167,7 @@ async function add() {
               v-model="form.province"
               :options="provinceOpts"
               placeholder="输入或选择省份"
-              @update:code="
-                provinceCode = $event
-                onProvinceChange()
-              "
+              @update:code="provinceCode = $event; onProvinceChange()"
             />
           </label>
           <label>
@@ -179,10 +176,7 @@ async function add() {
               v-model="form.city"
               :options="cityOpts"
               placeholder="输入或选择城市"
-              @update:code="
-                cityCode = $event
-                onCityChange()
-              "
+              @update:code="cityCode = $event; onCityChange()"
             />
           </label>
           <label>
