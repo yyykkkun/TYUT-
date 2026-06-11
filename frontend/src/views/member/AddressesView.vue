@@ -25,18 +25,18 @@ const cityCode = ref('')
 const districtCode = ref('')
 
 // 省份选项
-const provinceOpts = computed(() => regions.map(r => ({ code: r.code, name: r.name })))
+const provinceOpts = computed(() => regions.map((r) => ({ code: r.code, name: r.name })))
 
 // 城市选项：按省份 code 筛选
 const cityOpts = computed(() => {
-  const p = regions.find(r => r.code === provinceCode.value)
-  return (p?.children || []).map(c => ({ code: c.code, name: c.name }))
+  const p = regions.find((r) => r.code === provinceCode.value)
+  return (p?.children || []).map((c) => ({ code: c.code, name: c.name }))
 })
 
 // 区县选项：按城市 code 筛选
 const districtOpts = computed(() => {
-  const c = regions.flatMap(r => r.children || []).find(c => c.code === cityCode.value)
-  return (c?.children || []).map(d => ({ code: d.code, name: d.name }))
+  const c = regions.flatMap((r) => r.children || []).find((c) => c.code === cityCode.value)
+  return (c?.children || []).map((d) => ({ code: d.code, name: d.name }))
 })
 
 // 省份变更 → 重置城市、区县
@@ -65,9 +65,18 @@ async function add() {
   errorMsg.value = ''
   successMsg.value = ''
 
-  if (!form.name.trim()) { errorMsg.value = '请填写收货人姓名'; return }
-  if (!validatePhone(form.phone)) { errorMsg.value = '请填写正确的 11 位手机号'; return }
-  if (!form.detail.trim()) { errorMsg.value = '请填写详细地址'; return }
+  if (!form.name.trim()) {
+    errorMsg.value = '请填写收货人姓名'
+    return
+  }
+  if (!validatePhone(form.phone)) {
+    errorMsg.value = '请填写正确的 11 位手机号'
+    return
+  }
+  if (!form.detail.trim()) {
+    errorMsg.value = '请填写详细地址'
+    return
+  }
 
   await member.addAddress({ ...form })
 
@@ -97,7 +106,12 @@ async function add() {
 
     <!-- 已有地址 -->
     <section v-if="member.addresses.length" class="address-grid">
-      <article v-for="addr in member.addresses" :key="addr.id" class="address-card" :class="{ selected: addr.isDefault }">
+      <article
+        v-for="addr in member.addresses"
+        :key="addr.id"
+        class="address-card"
+        :class="{ selected: addr.isDefault }"
+      >
         <div class="addr-header">
           <strong>{{ addr.name }}</strong>
           <span class="phone">{{ addr.phone }}</span>
@@ -105,8 +119,17 @@ async function add() {
         </div>
         <p>{{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detail }}</p>
         <div class="action-row">
-          <button v-if="!addr.isDefault" class="btn small" type="button" @click="member.setDefaultAddress(addr.id)">设为默认</button>
-          <button class="btn small subtle" type="button" @click="member.removeAddress(addr.id)">删除</button>
+          <button
+            v-if="!addr.isDefault"
+            class="btn small"
+            type="button"
+            @click="member.setDefaultAddress(addr.id)"
+          >
+            设为默认
+          </button>
+          <button class="btn small subtle" type="button" @click="member.removeAddress(addr.id)">
+            删除
+          </button>
         </div>
       </article>
     </section>
@@ -128,7 +151,12 @@ async function add() {
           </label>
           <label>
             手机号
-            <input v-model="form.phone" placeholder="11 位手机号" maxlength="11" :class="{ invalid: form.phone && !validatePhone(form.phone) }" />
+            <input
+              v-model="form.phone"
+              placeholder="11 位手机号"
+              maxlength="11"
+              :class="{ invalid: form.phone && !validatePhone(form.phone) }"
+            />
           </label>
         </div>
 
@@ -139,7 +167,10 @@ async function add() {
               v-model="form.province"
               :options="provinceOpts"
               placeholder="输入或选择省份"
-              @update:code="provinceCode = $event; onProvinceChange()"
+              @update:code="
+                provinceCode = $event
+                onProvinceChange()
+              "
             />
           </label>
           <label>
@@ -148,7 +179,10 @@ async function add() {
               v-model="form.city"
               :options="cityOpts"
               placeholder="输入或选择城市"
-              @update:code="cityCode = $event; onCityChange()"
+              @update:code="
+                cityCode = $event
+                onCityChange()
+              "
             />
           </label>
           <label>
@@ -181,45 +215,50 @@ async function add() {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: .75rem;
-  margin-bottom: .75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 .form-row.three {
   grid-template-columns: 1fr 1fr 1fr;
 }
 input.invalid {
-  border-color: #dc2626 !important;
-  background: #fef2f2;
+  border-color: var(--danger) !important;
+  background: var(--danger-soft);
 }
 .error-msg {
-  background: #fef2f2;
-  color: #dc2626;
-  padding: .6rem .9rem;
-  border-radius: 6px;
-  font-size: .9rem;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid oklch(0.82 0.08 25);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 .success-msg {
-  background: #f0fdf4;
-  color: #16a34a;
-  padding: .6rem .9rem;
-  border-radius: 6px;
-  font-size: .9rem;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid oklch(0.82 0.08 155);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 .default-badge {
-  background: var(--primary, #4f46e5);
-  color: #fff;
-  font-size: .72rem;
-  padding: .15rem .5rem;
-  border-radius: 4px;
-  margin-left: .5rem;
+  background: var(--primary);
+  color: var(--surface);
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.5rem;
 }
 .addr-header {
   display: flex;
   align-items: center;
-  gap: .5rem;
-  margin-bottom: .35rem;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
 }
-.phone { color: #6b7280; font-size: .9rem; }
+.phone {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
 </style>

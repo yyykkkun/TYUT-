@@ -24,11 +24,16 @@ const filtered = computed(() => {
   if (!q) return props.options.slice(0, 10)
   const lower = q.toLowerCase()
   return props.options
-    .filter(o => o.name.includes(q) || o.name.toLowerCase().includes(lower))
+    .filter((o) => o.name.includes(q) || o.name.toLowerCase().includes(lower))
     .slice(0, 15)
 })
 
-watch(() => props.modelValue, v => { inputVal.value = v })
+watch(
+  () => props.modelValue,
+  (v) => {
+    inputVal.value = v
+  },
+)
 
 function select(opt: { code: string; name: string }) {
   inputVal.value = opt.name
@@ -52,7 +57,9 @@ function onInput(e: Event) {
 }
 
 function onBlur() {
-  setTimeout(() => { showDropdown.value = false }, 200)
+  setTimeout(() => {
+    showDropdown.value = false
+  }, 200)
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -65,8 +72,9 @@ function onKeydown(e: KeyboardEvent) {
     highlightIdx.value = Math.max(highlightIdx.value - 1, 0)
   } else if (e.key === 'Enter') {
     e.preventDefault()
-    if (highlightIdx.value >= 0 && filtered.value[highlightIdx.value]) {
-      select(filtered.value[highlightIdx.value])
+    const highlighted = filtered.value[highlightIdx.value]
+    if (highlightIdx.value >= 0 && highlighted) {
+      select(highlighted)
     }
   } else if (e.key === 'Escape') {
     showDropdown.value = false
@@ -117,18 +125,18 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
 }
 .ac-input {
   width: 100%;
-  padding: .5rem .7rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: .9rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
   outline: none;
-  background: #fff;
+  background: var(--surface);
   box-sizing: border-box;
   line-height: 1.5;
 }
 .ac-input:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79,70,229,.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-ring);
 }
 .ac-drop {
   position: absolute;
@@ -137,25 +145,25 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
   right: 0;
   max-height: 220px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  z-index: 500;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 30;
   padding: 4px 0;
   margin: 0;
   list-style: none;
 }
 .ac-drop li {
-  padding: .5rem .8rem;
+  padding: 0.5rem 0.8rem;
   cursor: pointer;
-  font-size: .9rem;
-  color: #1f2937;
-  transition: background .08s;
+  font-size: 0.9rem;
+  color: var(--ink);
+  transition: background 0.08s;
 }
 .ac-drop li:hover,
 .ac-drop li.hl {
-  background: #eef2ff;
-  color: #4f46e5;
+  background: var(--primary-soft);
+  color: var(--primary-hover);
 }
 </style>

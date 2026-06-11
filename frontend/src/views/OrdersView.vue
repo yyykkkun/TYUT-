@@ -19,14 +19,44 @@ onMounted(() => {
     </div>
 
     <div class="tabs">
-      <button :class="{ active: orders.statusFilter === 'all' }" @click="orders.statusFilter = 'all'">全部</button>
-      <button :class="{ active: orders.statusFilter === 'pending_payment' }" @click="orders.statusFilter = 'pending_payment'">待付款</button>
-      <button :class="{ active: orders.statusFilter === 'paid' }" @click="orders.statusFilter = 'paid'">待发货</button>
-      <button :class="{ active: orders.statusFilter === 'shipping' }" @click="orders.statusFilter = 'shipping'">待收货</button>
-      <button :class="{ active: orders.statusFilter === 'completed' }" @click="orders.statusFilter = 'completed'">已完成</button>
+      <button
+        :class="{ active: orders.statusFilter === 'all' }"
+        @click="orders.statusFilter = 'all'"
+      >
+        全部
+      </button>
+      <button
+        :class="{ active: orders.statusFilter === 'pending_payment' }"
+        @click="orders.statusFilter = 'pending_payment'"
+      >
+        待付款
+      </button>
+      <button
+        :class="{ active: orders.statusFilter === 'paid' }"
+        @click="orders.statusFilter = 'paid'"
+      >
+        待发货
+      </button>
+      <button
+        :class="{ active: orders.statusFilter === 'shipping' }"
+        @click="orders.statusFilter = 'shipping'"
+      >
+        待收货
+      </button>
+      <button
+        :class="{ active: orders.statusFilter === 'completed' }"
+        @click="orders.statusFilter = 'completed'"
+      >
+        已完成
+      </button>
     </div>
 
-    <EmptyState v-if="!orders.visibleOrders.length" title="当前没有订单" action-text="去选商品" action-to="/products" />
+    <EmptyState
+      v-if="!orders.visibleOrders.length"
+      title="当前没有订单"
+      action-text="去选商品"
+      action-to="/products"
+    />
 
     <div v-else class="line-list">
       <article v-for="order in orders.visibleOrders" :key="order.id" class="order-card">
@@ -38,7 +68,12 @@ onMounted(() => {
           <OrderStatusTag :status="order.status" />
         </div>
         <div class="mini-products">
-          <img v-for="item in order.items" :key="`${order.id}-${item.productId}`" :src="item.image" :alt="item.title" />
+          <img
+            v-for="item in order.items"
+            :key="`${order.id}-${item.productId}`"
+            :src="item.image"
+            :alt="item.title"
+          />
         </div>
         <div class="order-card__bottom">
           <strong>￥{{ order.total }}</strong>

@@ -75,7 +75,12 @@ export async function anonymousLogin(phone: string): Promise<LoginResult> {
   if (useMock) {
     return {
       token: mockToken,
-      user: { id: '3', name: `匿名用户${phone.slice(-4)}`, account: `u_${phone}`, level: '普通会员' },
+      user: {
+        id: '3',
+        name: `匿名用户${phone.slice(-4)}`,
+        account: `u_${phone}`,
+        level: '普通会员',
+      },
     }
   }
   try {
@@ -84,7 +89,12 @@ export async function anonymousLogin(phone: string): Promise<LoginResult> {
     useMock = true
     return {
       token: mockToken,
-      user: { id: '3', name: `匿名用户${phone.slice(-4)}`, account: `u_${phone}`, level: '普通会员' },
+      user: {
+        id: '3',
+        name: `匿名用户${phone.slice(-4)}`,
+        account: `u_${phone}`,
+        level: '普通会员',
+      },
     }
   }
 }

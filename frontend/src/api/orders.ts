@@ -1,6 +1,10 @@
 import { get, post, put } from '@/api/request'
 import type { Order, OrderItem, Address } from '@/types/domain'
-import { addresses as mockAddresses, products as mockProducts, coupons as mockCoupons } from '@/data/mock'
+import {
+  addresses as mockAddresses,
+  products as mockProducts,
+  coupons as mockCoupons,
+} from '@/data/mock'
 
 export interface OrderPreview {
   subtotal: number
@@ -37,16 +41,23 @@ function saveOrders(orders: Order[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
 }
 
-function loadCartItems(): { productId: string; spec: string; quantity: number; selected: boolean; product?: any }[] {
+function loadCartItems(): {
+  productId: string
+  spec: string
+  quantity: number
+  selected: boolean
+  product?: any
+}[] {
   try {
     const raw = localStorage.getItem(CART_KEY)
     const items: any[] = raw ? JSON.parse(raw) : []
     // 重新挂载 product 信息（与 cart.ts 的 loadMockCart 保持一致）
     for (const item of items) {
-      item.product = mockProducts.find((p: any) => p.id === item.productId)
-        || mockProducts.find((p: any) => p.id === (item.productId || '').replace(/^p/, ''))
-        || mockProducts.find((p: any) => p.id === `p${item.productId}`)
-        || item.product
+      item.product =
+        mockProducts.find((p: any) => p.id === item.productId) ||
+        mockProducts.find((p: any) => p.id === (item.productId || '').replace(/^p/, '')) ||
+        mockProducts.find((p: any) => p.id === `p${item.productId}`) ||
+        item.product
     }
     return items
   } catch {
@@ -72,7 +83,7 @@ export async function fetchOrders(status = 'all', page = 1, pageSize = 20): Prom
   if (useMock) {
     const all = loadOrders()
     if (status === 'all') return all
-    return all.filter(o => o.status === status)
+    return all.filter((o) => o.status === status)
   }
   try {
     return await get<Order[]>('/orders', { status, page, pageSize })
@@ -81,13 +92,13 @@ export async function fetchOrders(status = 'all', page = 1, pageSize = 20): Prom
     console.warn('后端不可用，降级为本地 mock 数据')
     const all = loadOrders()
     if (status === 'all') return all
-    return all.filter(o => o.status === status)
+    return all.filter((o) => o.status === status)
   }
 }
 
 export async function fetchOrderDetail(id: string): Promise<Order> {
   if (useMock) {
-    const order = loadOrders().find(o => o.id === id)
+    const order = loadOrders().find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     return order
   }
@@ -95,7 +106,7 @@ export async function fetchOrderDetail(id: string): Promise<Order> {
     return await get<Order>(`/orders/${id}`)
   } catch {
     useMock = true
-    const order = loadOrders().find(o => o.id === id)
+    const order = loadOrders().find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     return order
   }
@@ -103,11 +114,11 @@ export async function fetchOrderDetail(id: string): Promise<Order> {
 
 export async function previewOrder(params: OrderCreateParams): Promise<OrderPreview> {
   if (useMock) {
-    const cart = loadCartItems().filter(i => i.selected)
+    const cart = loadCartItems().filter((i) => i.selected)
     const subtotal = cart.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0)
-    const coupon = params.couponId ? mockCoupons.find(c => c.id === params.couponId) : null
+    const coupon = params.couponId ? mockCoupons.find((c) => c.id === params.couponId) : null
     // 检查门槛
-    const couponAmount = (coupon && !coupon.used && subtotal >= coupon.threshold) ? coupon.amount : 0
+    const couponAmount = coupon && !coupon.used && subtotal >= coupon.threshold ? coupon.amount : 0
     const pointsAmount = params.usePoints ? 10 : 0
     const giftCardAmount = params.useGiftCard ? 20 : 0
     const freight = params.deliveryMethod === 'pickup' ? 0 : 8
@@ -125,10 +136,10 @@ export async function previewOrder(params: OrderCreateParams): Promise<OrderPrev
 export async function createOrder(params: OrderCreateParams): Promise<string> {
   if (useMock) {
     const cart = loadCartItems()
-    const selected = cart.filter(i => i.selected)
+    const selected = cart.filter((i) => i.selected)
     if (!selected.length) throw new Error('没有待结算商品')
 
-    const orderItems: OrderItem[] = selected.map(i => ({
+    const orderItems: OrderItem[] = selected.map((i) => ({
       productId: i.productId,
       title: i.product?.title || `商品 ${i.productId}`,
       image: i.product?.image || '',
@@ -137,11 +148,20 @@ export async function createOrder(params: OrderCreateParams): Promise<string> {
       quantity: i.quantity,
     }))
 
-    const address: Address = mockAddresses[0]
+    const address: Address = mockAddresses[0] ?? {
+      id: 'fallback-address',
+      name: '默认收货人',
+      phone: '13800000000',
+      province: '山西省',
+      city: '太原市',
+      district: '小店区',
+      detail: '校园服务中心',
+      isDefault: true,
+    }
 
     const subtotal = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
-    const coupon = params.couponId ? mockCoupons.find(c => c.id === params.couponId) : null
-    const couponAmount = (coupon && !coupon.used && subtotal >= coupon.threshold) ? coupon.amount : 0
+    const coupon = params.couponId ? mockCoupons.find((c) => c.id === params.couponId) : null
+    const couponAmount = coupon && !coupon.used && subtotal >= coupon.threshold ? coupon.amount : 0
     const pointsAmount = params.usePoints ? 10 : 0
     const giftCardAmount = params.useGiftCard ? 20 : 0
     const freight = params.deliveryMethod === 'pickup' ? 0 : 8
@@ -170,7 +190,7 @@ export async function createOrder(params: OrderCreateParams): Promise<string> {
     saveOrders(orders)
 
     // 清除购物车中已选商品
-    const remaining = cart.filter(i => !i.selected)
+    const remaining = cart.filter((i) => !i.selected)
     saveCartItems(remaining)
 
     return id
@@ -186,7 +206,7 @@ export async function createOrder(params: OrderCreateParams): Promise<string> {
 export async function payOrder(id: string): Promise<void> {
   if (useMock) {
     const orders = loadOrders()
-    const order = orders.find(o => o.id === id)
+    const order = orders.find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     order.status = 'paid'
     order.paidAt = now()
@@ -205,7 +225,7 @@ export async function payOrder(id: string): Promise<void> {
 export async function cancelOrder(id: string): Promise<void> {
   if (useMock) {
     const orders = loadOrders()
-    const order = orders.find(o => o.id === id)
+    const order = orders.find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     order.status = 'cancelled'
     saveOrders(orders)
@@ -222,7 +242,7 @@ export async function cancelOrder(id: string): Promise<void> {
 export async function confirmOrder(id: string): Promise<void> {
   if (useMock) {
     const orders = loadOrders()
-    const order = orders.find(o => o.id === id)
+    const order = orders.find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     order.status = 'completed'
     saveOrders(orders)
@@ -239,7 +259,7 @@ export async function confirmOrder(id: string): Promise<void> {
 export async function reviewOrder(id: string, review: string): Promise<void> {
   if (useMock) {
     const orders = loadOrders()
-    const order = orders.find(o => o.id === id)
+    const order = orders.find((o) => o.id === id)
     if (!order) throw new Error('订单不存在')
     order.review = review
     saveOrders(orders)

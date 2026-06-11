@@ -1,6 +1,11 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { login as apiLogin, register as apiRegister, anonymousLogin as apiAnonymous, getMe } from '@/api/auth'
+import {
+  login as apiLogin,
+  register as apiRegister,
+  anonymousLogin as apiAnonymous,
+  getMe,
+} from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('mall-token') || '')

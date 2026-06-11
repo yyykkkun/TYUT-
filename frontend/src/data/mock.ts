@@ -159,9 +159,30 @@ export const addresses: Address[] = [
 ]
 
 export const coupons: Coupon[] = [
-  { id: 'c1', title: '满 199 减 30', threshold: 199, amount: 30, expiresAt: '2026-07-01', used: false },
-  { id: 'c2', title: '满 99 减 12', threshold: 99, amount: 12, expiresAt: '2026-06-18', used: false },
-  { id: 'c3', title: '生鲜专享 8 元券', threshold: 59, amount: 8, expiresAt: '2026-06-30', used: false },
+  {
+    id: 'c1',
+    title: '满 199 减 30',
+    threshold: 199,
+    amount: 30,
+    expiresAt: '2026-07-01',
+    used: false,
+  },
+  {
+    id: 'c2',
+    title: '满 99 减 12',
+    threshold: 99,
+    amount: 12,
+    expiresAt: '2026-06-18',
+    used: false,
+  },
+  {
+    id: 'c3',
+    title: '生鲜专享 8 元券',
+    threshold: 59,
+    amount: 8,
+    expiresAt: '2026-06-30',
+    used: false,
+  },
 ]
 
 export const messages: Message[] = [

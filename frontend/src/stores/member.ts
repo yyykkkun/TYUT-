@@ -26,7 +26,9 @@ export const useMemberStore = defineStore('member', () => {
   const browseHistory = ref<string[]>([])
   const loading = ref(false)
 
-  const defaultAddress = computed(() => addresses.value.find((item) => item.isDefault) || addresses.value[0])
+  const defaultAddress = computed(
+    () => addresses.value.find((item) => item.isDefault) || addresses.value[0],
+  )
   const availableCoupons = computed(() => coupons.value.filter((item) => !item.used))
 
   async function loadProfile() {
@@ -39,13 +41,17 @@ export const useMemberStore = defineStore('member', () => {
       level.value = p.level
       couponCount.value = p.couponCount
       unreadCount.value = p.unreadCount
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function loadAddresses() {
     try {
       addresses.value = await fetchAddresses()
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function addAddress(data: Omit<Address, 'id'>) {
@@ -66,7 +72,9 @@ export const useMemberStore = defineStore('member', () => {
   async function loadCoupons() {
     try {
       coupons.value = await fetchCoupons()
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function exchangeCoupon(pointsCost: number): Promise<boolean> {
@@ -79,7 +87,9 @@ export const useMemberStore = defineStore('member', () => {
   async function loadBrowseHistory() {
     try {
       browseHistory.value = await fetchBrowseHistory()
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function loadAll() {
@@ -92,10 +102,27 @@ export const useMemberStore = defineStore('member', () => {
   }
 
   return {
-    balance, points, giftCard, growth, level, couponCount, unreadCount,
-    addresses, coupons, browseHistory, loading,
-    defaultAddress, availableCoupons,
-    loadProfile, loadAddresses, addAddress, setDefaultAddress, removeAddress,
-    loadCoupons, exchangeCoupon, loadBrowseHistory, loadAll,
+    balance,
+    points,
+    giftCard,
+    growth,
+    level,
+    couponCount,
+    unreadCount,
+    addresses,
+    coupons,
+    browseHistory,
+    loading,
+    defaultAddress,
+    availableCoupons,
+    loadProfile,
+    loadAddresses,
+    addAddress,
+    setDefaultAddress,
+    removeAddress,
+    loadCoupons,
+    exchangeCoupon,
+    loadBrowseHistory,
+    loadAll,
   }
 })

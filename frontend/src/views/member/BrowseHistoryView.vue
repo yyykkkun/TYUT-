@@ -22,11 +22,7 @@ const historyProducts = computed(() =>
       <p>近期查看过的商品会用于猜你喜欢兜底推荐。</p>
     </div>
     <div v-if="historyProducts.length" class="product-grid">
-      <ProductCard
-        v-for="product in historyProducts"
-        :key="product.id"
-        :product="product"
-      />
+      <ProductCard v-for="product in historyProducts" :key="product.id" :product="product" />
     </div>
     <EmptyState v-else title="还没有浏览记录" action-text="去看商品" action-to="/products" />
   </main>

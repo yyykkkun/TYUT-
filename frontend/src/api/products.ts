@@ -13,11 +13,14 @@ interface ProductPage {
 // 是否使用 mock（后端不可用时自动降级）
 let useMock = false
 
-function fallback<T>(realCall: () => Promise<T>, mockData: T): () => Promise<T> {
-  return async () => {
+function fallback<T, Args extends unknown[] = []>(
+  realCall: (...args: Args) => Promise<T>,
+  mockData: T,
+): (...args: Args) => Promise<T> {
+  return async (...args: Args) => {
     if (useMock) return mockData
     try {
-      const result = await realCall()
+      const result = await realCall(...args)
       return result
     } catch {
       useMock = true
@@ -34,12 +37,12 @@ export const fetchProducts = fallback(
 
 export function fetchProductDetail(id: string): Promise<Product> {
   if (useMock) {
-    const p = mockProducts.find(p => p.id === id)
+    const p = mockProducts.find((p) => p.id === id)
     return Promise.resolve(p as Product)
   }
   return get<Product>(`/products/${id}`).catch(() => {
     useMock = true
-    const p = mockProducts.find(p => p.id === id)
+    const p = mockProducts.find((p) => p.id === id)
     return p as Product
   })
 }
@@ -51,12 +54,15 @@ export const fetchHotProducts = fallback(
 
 export const fetchLatestProducts = fallback(
   () => get<Product[]>('/products/latest'),
-  [...mockProducts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).reverse().slice(0, 4),
+  [...mockProducts]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .reverse()
+    .slice(0, 4),
 )
 
 export const fetchSpecialProducts = fallback(
   () => get<Product[]>('/products/special'),
-  mockProducts.filter(p => p.promotion === 'special'),
+  mockProducts.filter((p) => p.promotion === 'special'),
 )
 
 export const fetchRecommendedProducts = fallback(
@@ -64,17 +70,14 @@ export const fetchRecommendedProducts = fallback(
   [...mockProducts].sort((a, b) => b.popularity - a.popularity).slice(0, 6),
 )
 
-export const fetchCategories = fallback(
-  () => get<Category[]>('/categories'),
-  mockCategories,
-)
+export const fetchCategories = fallback(() => get<Category[]>('/categories'), mockCategories)
 
 export const fetchSeckillProducts = fallback(
   () => get<Product[]>('/promotions/seckill'),
-  mockProducts.filter(p => p.promotion === 'seckill'),
+  mockProducts.filter((p) => p.promotion === 'seckill'),
 )
 
 export const fetchGroupBuyProducts = fallback(
   () => get<Product[]>('/promotions/group-buy'),
-  mockProducts.filter(p => p.promotion === 'group-buy'),
+  mockProducts.filter((p) => p.promotion === 'group-buy'),
 )

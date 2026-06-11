@@ -89,7 +89,12 @@ async function doRegister() {
         </label>
         <label>
           密码
-          <input v-model="loginPassword" type="password" autocomplete="current-password" placeholder="输入密码" />
+          <input
+            v-model="loginPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="输入密码"
+          />
         </label>
         <button class="btn primary" type="submit" :disabled="submitting">
           {{ submitting ? '登录中...' : '登录' }}
@@ -109,11 +114,21 @@ async function doRegister() {
         </label>
         <label>
           密码
-          <input v-model="regPassword" type="password" autocomplete="new-password" placeholder="至少 6 位" />
+          <input
+            v-model="regPassword"
+            type="password"
+            autocomplete="new-password"
+            placeholder="至少 6 位"
+          />
         </label>
         <label>
           确认密码
-          <input v-model="regConfirm" type="password" autocomplete="new-password" placeholder="再次输入密码" />
+          <input
+            v-model="regConfirm"
+            type="password"
+            autocomplete="new-password"
+            placeholder="再次输入密码"
+          />
         </label>
         <button class="btn primary" type="submit" :disabled="submitting">
           {{ submitting ? '注册中...' : '注册并登录' }}

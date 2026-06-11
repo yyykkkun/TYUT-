@@ -66,27 +66,40 @@ export const useProductStore = defineStore('products', () => {
     const f = filters.value
     if (f.keyword) {
       const kw = f.keyword.toLowerCase()
-      result = result.filter(p =>
-        p.title.toLowerCase().includes(kw) ||
-        p.subtitle.toLowerCase().includes(kw) ||
-        p.tags.some(t => t.toLowerCase().includes(kw)),
+      result = result.filter(
+        (p) =>
+          p.title.toLowerCase().includes(kw) ||
+          p.subtitle.toLowerCase().includes(kw) ||
+          p.tags.some((t) => t.toLowerCase().includes(kw)),
       )
     }
-    if (f.category) result = result.filter(p => p.category === f.category)
-    if (f.brand) result = result.filter(p => p.brand === f.brand)
-    if (f.stock === 'in') result = result.filter(p => p.stock > 0)
-    else if (f.stock === 'out') result = result.filter(p => p.stock === 0)
-    if (f.city) result = result.filter(p => p.city === f.city)
-    if (f.minPrice !== null) result = result.filter(p => p.price >= f.minPrice!)
-    if (f.maxPrice !== null) result = result.filter(p => p.price <= f.maxPrice!)
+    if (f.category) result = result.filter((p) => p.category === f.category)
+    if (f.brand) result = result.filter((p) => p.brand === f.brand)
+    if (f.stock === 'in') result = result.filter((p) => p.stock > 0)
+    else if (f.stock === 'out') result = result.filter((p) => p.stock === 0)
+    if (f.city) result = result.filter((p) => p.city === f.city)
+    if (f.minPrice !== null) result = result.filter((p) => p.price >= f.minPrice!)
+    if (f.maxPrice !== null) result = result.filter((p) => p.price <= f.maxPrice!)
 
     switch (f.sort) {
-      case 'priceAsc': result.sort((a, b) => a.price - b.price); break
-      case 'priceDesc': result.sort((a, b) => b.price - a.price); break
-      case 'sales': result.sort((a, b) => b.sales - a.sales); break
-      case 'popularity': result.sort((a, b) => b.popularity - a.popularity); break
-      case 'latest': result.sort((a, b) => b.createdAt.localeCompare(a.createdAt)); break
-      default: result.sort((a, b) => b.popularity - a.popularity); break
+      case 'priceAsc':
+        result.sort((a, b) => a.price - b.price)
+        break
+      case 'priceDesc':
+        result.sort((a, b) => b.price - a.price)
+        break
+      case 'sales':
+        result.sort((a, b) => b.sales - a.sales)
+        break
+      case 'popularity':
+        result.sort((a, b) => b.popularity - a.popularity)
+        break
+      case 'latest':
+        result.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        break
+      default:
+        result.sort((a, b) => b.popularity - a.popularity)
+        break
     }
     return result
   })

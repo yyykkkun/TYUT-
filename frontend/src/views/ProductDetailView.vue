@@ -14,7 +14,9 @@ const quantity = ref(1)
 const selectedSpec = ref('')
 const detailProduct = ref<Product | undefined>(undefined)
 
-const product = computed(() => detailProduct.value || productStore.getProduct(String(route.params.id)))
+const product = computed(
+  () => detailProduct.value || productStore.getProduct(String(route.params.id)),
+)
 
 async function loadProduct() {
   const id = String(route.params.id)
@@ -24,7 +26,11 @@ async function loadProduct() {
 
 onMounted(loadProduct)
 watch(() => route.params.id, loadProduct)
-const related = computed(() => productStore.products.filter((item) => item.category === product.value?.category && item.id !== product.value.id).slice(0, 4))
+const related = computed(() =>
+  productStore.products
+    .filter((item) => item.category === product.value?.category && item.id !== product.value.id)
+    .slice(0, 4),
+)
 
 watchEffect(() => {
   if (product.value) {
@@ -42,7 +48,9 @@ async function addToCart(goCheckout = false) {
 function shareProduct() {
   if (!product.value) return
   if ('share' in navigator) {
-    navigator.share({ title: product.value.title, text: product.value.subtitle }).catch(() => undefined)
+    navigator
+      .share({ title: product.value.title, text: product.value.subtitle })
+      .catch(() => undefined)
   } else {
     window.alert('已复制分享标题：' + product.value.title)
   }
@@ -84,8 +92,17 @@ function shareProduct() {
         <input v-model.number="quantity" type="number" min="1" :max="Math.max(product.stock, 1)" />
       </label>
       <div class="action-row">
-        <button class="btn" type="button" :disabled="product.stock <= 0" @click="addToCart(false)">加入购物车</button>
-        <button class="btn primary" type="button" :disabled="product.stock <= 0" @click="addToCart(true)">立即购买</button>
+        <button class="btn" type="button" :disabled="product.stock <= 0" @click="addToCart(false)">
+          加入购物车
+        </button>
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="product.stock <= 0"
+          @click="addToCart(true)"
+        >
+          立即购买
+        </button>
         <button class="btn subtle" type="button" @click="shareProduct">分享</button>
       </div>
     </section>

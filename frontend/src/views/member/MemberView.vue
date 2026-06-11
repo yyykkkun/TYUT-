@@ -27,11 +27,21 @@ onMounted(() => {
     </section>
 
     <section class="metric-grid">
-      <article><span>余额</span><strong>￥{{ member.balance }}</strong></article>
-      <article><span>积分</span><strong>{{ member.points }}</strong></article>
-      <article><span>优惠券</span><strong>{{ member.availableCoupons.length }}</strong></article>
-      <article><span>礼品卡</span><strong>￥{{ member.giftCard }}</strong></article>
-      <article><span>未读消息</span><strong>{{ messages.unreadCount }}</strong></article>
+      <article>
+        <span>余额</span><strong>￥{{ member.balance }}</strong>
+      </article>
+      <article>
+        <span>积分</span><strong>{{ member.points }}</strong>
+      </article>
+      <article>
+        <span>优惠券</span><strong>{{ member.availableCoupons.length }}</strong>
+      </article>
+      <article>
+        <span>礼品卡</span><strong>￥{{ member.giftCard }}</strong>
+      </article>
+      <article>
+        <span>未读消息</span><strong>{{ messages.unreadCount }}</strong>
+      </article>
     </section>
 
     <section class="quick-grid">

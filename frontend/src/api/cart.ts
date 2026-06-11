@@ -17,10 +17,11 @@ function loadMockCart(): CartItemWithProduct[] {
     const items: CartItemWithProduct[] = raw ? JSON.parse(raw) : []
     // 始终重新挂载 product 信息（确保 price/title/image 等字段完整）
     for (const item of items) {
-      item.product = mockProducts.find(p => p.id === item.productId)
-        || mockProducts.find(p => p.id === item.productId.replace(/^p/, ''))
-        || mockProducts.find(p => p.id === `p${item.productId}`)
-        || item.product // 保留原有（可能来自后端）
+      item.product =
+        mockProducts.find((p) => p.id === item.productId) ||
+        mockProducts.find((p) => p.id === item.productId.replace(/^p/, '')) ||
+        mockProducts.find((p) => p.id === `p${item.productId}`) ||
+        item.product // 保留原有（可能来自后端）
     }
     return items
   } catch {
@@ -48,7 +49,7 @@ export async function fetchCart(): Promise<CartItemWithProduct[]> {
 export async function addToCart(productId: string, spec: string, quantity = 1): Promise<void> {
   if (useMock) {
     const cart = loadMockCart()
-    const existing = cart.find(i => i.productId === productId && i.spec === spec)
+    const existing = cart.find((i) => i.productId === productId && i.spec === spec)
     if (existing) {
       existing.quantity += quantity
     } else {
@@ -58,7 +59,7 @@ export async function addToCart(productId: string, spec: string, quantity = 1): 
         spec,
         quantity,
         selected: true,
-        product: mockProducts.find(p => p.id === productId),
+        product: mockProducts.find((p) => p.id === productId),
       })
     }
     saveMockCart(cart)
@@ -75,7 +76,7 @@ export async function addToCart(productId: string, spec: string, quantity = 1): 
 export async function updateCartQuantity(id: string, quantity: number): Promise<void> {
   if (useMock) {
     const cart = loadMockCart()
-    const item = cart.find(i => i.id === id)
+    const item = cart.find((i) => i.id === id)
     if (item) item.quantity = quantity
     saveMockCart(cart)
     return
@@ -91,7 +92,7 @@ export async function updateCartQuantity(id: string, quantity: number): Promise<
 export async function toggleCartSelect(id: string): Promise<void> {
   if (useMock) {
     const cart = loadMockCart()
-    const item = cart.find(i => i.id === id)
+    const item = cart.find((i) => i.id === id)
     if (item) item.selected = !item.selected
     saveMockCart(cart)
     return
@@ -107,7 +108,7 @@ export async function toggleCartSelect(id: string): Promise<void> {
 export async function removeCartItem(id: string): Promise<void> {
   if (useMock) {
     const cart = loadMockCart()
-    const idx = cart.findIndex(i => i.id === id)
+    const idx = cart.findIndex((i) => i.id === id)
     if (idx >= 0) cart.splice(idx, 1)
     saveMockCart(cart)
     return
@@ -123,7 +124,7 @@ export async function removeCartItem(id: string): Promise<void> {
 export async function clearSelectedCart(): Promise<void> {
   if (useMock) {
     const cart = loadMockCart()
-    const filtered = cart.filter(i => !i.selected)
+    const filtered = cart.filter((i) => !i.selected)
     saveMockCart(filtered)
     return
   }

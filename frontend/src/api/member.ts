@@ -81,7 +81,7 @@ export async function addAddress(data: Omit<Address, 'id'>): Promise<void> {
     }
     // 设为默认时取消其他默认
     if (addr.isDefault) {
-      addrs.forEach(a => (a.isDefault = false))
+      addrs.forEach((a) => (a.isDefault = false))
     }
     addrs.push(addr)
     saveAddresses(addrs)
@@ -98,7 +98,7 @@ export async function addAddress(data: Omit<Address, 'id'>): Promise<void> {
 export async function setDefaultAddress(id: string): Promise<void> {
   if (useMock) {
     const addrs = loadAddresses()
-    addrs.forEach(a => (a.isDefault = a.id === id))
+    addrs.forEach((a) => (a.isDefault = a.id === id))
     saveAddresses(addrs)
     return
   }
@@ -112,10 +112,11 @@ export async function setDefaultAddress(id: string): Promise<void> {
 
 export async function removeAddress(id: string): Promise<void> {
   if (useMock) {
-    const addrs = loadAddresses().filter(a => a.id !== id)
+    const addrs = loadAddresses().filter((a) => a.id !== id)
     // 如果删了默认地址，第一个自动变默认
-    if (addrs.length && !addrs.find(a => a.isDefault)) {
-      addrs[0].isDefault = true
+    const firstAddress = addrs[0]
+    if (firstAddress && !addrs.find((a) => a.isDefault)) {
+      firstAddress.isDefault = true
     }
     saveAddresses(addrs)
     return

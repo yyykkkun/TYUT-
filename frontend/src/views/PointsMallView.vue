@@ -22,8 +22,12 @@ async function exchange() {
       <p>积分可兑换优惠券或礼品。</p>
     </div>
     <section class="metric-grid">
-      <article><span>当前积分</span><strong>{{ member.points }}</strong></article>
-      <article><span>可用优惠券</span><strong>{{ member.availableCoupons.length }}</strong></article>
+      <article>
+        <span>当前积分</span><strong>{{ member.points }}</strong>
+      </article>
+      <article>
+        <span>可用优惠券</span><strong>{{ member.availableCoupons.length }}</strong>
+      </article>
     </section>
     <section class="panel reward-card">
       <div>

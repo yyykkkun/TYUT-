@@ -17,7 +17,7 @@ export async function fetchMessages(): Promise<Message[]> {
 
 export async function markMessageRead(id: string): Promise<void> {
   if (useMock) {
-    const msg = mockMessages.find(m => m.id === id)
+    const msg = mockMessages.find((m) => m.id === id)
     if (msg) msg.read = true
     return
   }

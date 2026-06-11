@@ -94,9 +94,22 @@ async function doReview() {
         <!-- 收货信息 -->
         <section class="panel">
           <h2>收货信息</h2>
-          <p><strong>{{ order.address.name }}</strong> {{ order.address.phone }}</p>
-          <p>{{ order.address.province }} {{ order.address.city }} {{ order.address.district }} {{ order.address.detail }}</p>
-          <p>配送方式：{{ order.deliveryMethod === 'pickup' ? '门店自提' : order.deliveryMethod === 'third-party' ? '第三方物流' : '平台物流' }}</p>
+          <p>
+            <strong>{{ order.address.name }}</strong> {{ order.address.phone }}
+          </p>
+          <p>
+            {{ order.address.province }} {{ order.address.city }} {{ order.address.district }}
+            {{ order.address.detail }}
+          </p>
+          <p>
+            配送方式：{{
+              order.deliveryMethod === 'pickup'
+                ? '门店自提'
+                : order.deliveryMethod === 'third-party'
+                  ? '第三方物流'
+                  : '平台物流'
+            }}
+          </p>
         </section>
 
         <!-- 物流轨迹 -->
@@ -104,8 +117,12 @@ async function doReview() {
           <h2>物流状态</h2>
           <ol class="timeline">
             <li>订单已创建{{ order.status === 'pending_payment' ? '，等待付款' : '' }}</li>
-            <li v-if="order.status !== 'pending_payment'">支付成功 · 运单号 {{ order.deliveryNo || '---' }}</li>
-            <li v-if="order.status === 'shipping' || order.status === 'completed'">包裹已发出，正在配送</li>
+            <li v-if="order.status !== 'pending_payment'">
+              支付成功 · 运单号 {{ order.deliveryNo || '---' }}
+            </li>
+            <li v-if="order.status === 'shipping' || order.status === 'completed'">
+              包裹已发出，正在配送
+            </li>
             <li v-if="order.status === 'completed'">已确认收货，交易完成</li>
           </ol>
         </section>
@@ -124,20 +141,42 @@ async function doReview() {
       <!-- 侧边栏 - 金额与操作 -->
       <aside class="summary-panel">
         <h2>金额明细</h2>
-        <p><span>优惠券</span><strong>-￥{{ order.couponAmount }}</strong></p>
-        <p><span>积分</span><strong>-{{ order.pointsUsed }} 分</strong></p>
-        <p><span>礼品卡</span><strong>-￥{{ order.giftCardAmount }}</strong></p>
-        <p><span>运费</span><strong>￥{{ order.freight }}</strong></p>
-        <p class="total"><span>实付</span><strong>￥{{ order.total }}</strong></p>
+        <p>
+          <span>优惠券</span><strong>-￥{{ order.couponAmount }}</strong>
+        </p>
+        <p>
+          <span>积分</span><strong>-{{ order.pointsUsed }} 分</strong>
+        </p>
+        <p>
+          <span>礼品卡</span><strong>-￥{{ order.giftCardAmount }}</strong>
+        </p>
+        <p>
+          <span>运费</span><strong>￥{{ order.freight }}</strong>
+        </p>
+        <p class="total">
+          <span>实付</span><strong>￥{{ order.total }}</strong>
+        </p>
 
         <!-- 操作按钮 -->
-        <button v-if="order.status === 'pending_payment'" class="btn primary block" @click="openPay">
+        <button
+          v-if="order.status === 'pending_payment'"
+          class="btn primary block"
+          @click="openPay"
+        >
           去支付
         </button>
-        <button v-if="order.status === 'paid' || order.status === 'shipping'" class="btn primary block" @click="doConfirm">
+        <button
+          v-if="order.status === 'paid' || order.status === 'shipping'"
+          class="btn primary block"
+          @click="doConfirm"
+        >
           确认收货
         </button>
-        <button v-if="order.status === 'pending_payment'" class="btn subtle block" @click="doCancel">
+        <button
+          v-if="order.status === 'pending_payment'"
+          class="btn subtle block"
+          @click="doCancel"
+        >
           取消订单
         </button>
       </aside>
@@ -147,7 +186,9 @@ async function doReview() {
     <div v-if="showPayModal" class="modal-overlay" @click.self="showPayModal = false">
       <div class="modal">
         <h2>选择支付方式</h2>
-        <p class="modal-amount">应付金额 <strong>￥{{ order.total }}</strong></p>
+        <p class="modal-amount">
+          应付金额 <strong>￥{{ order.total }}</strong>
+        </p>
 
         <div class="pay-methods">
           <label
@@ -182,43 +223,75 @@ async function doReview() {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: oklch(0.18 0.03 245 / 0.52);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 40;
+  padding: 1rem;
 }
 .modal {
-  background: #fff;
-  border-radius: 12px;
-  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 42px oklch(0.18 0.03 245 / 0.24);
+  padding: 1.5rem;
   width: 400px;
   max-width: 90vw;
 }
-.modal h2 { margin: 0 0 .5rem; }
+.modal h2 {
+  margin: 0 0 0.5rem;
+}
 .modal-amount {
-  color: #6b7280;
+  color: var(--ink-muted);
   margin: 0 0 1.25rem;
 }
 .modal-amount strong {
-  color: #dc2626;
+  color: var(--price);
   font-size: 1.2rem;
 }
-.pay-methods { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
+.pay-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
 .pay-option {
   display: flex;
   align-items: center;
-  gap: .75rem;
-  padding: .75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: border-color .15s;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
-.pay-option.active { border-color: var(--primary, #4f46e5); background: #f5f3ff; }
-.pay-option input { display: none; }
-.pay-icon { font-size: 1.5rem; }
-.pay-option strong { display: block; font-size: .95rem; }
-.pay-option small { color: #9ca3af; font-size: .8rem; }
-.modal-actions { display: flex; gap: .75rem; justify-content: flex-end; }
+.pay-option:hover {
+  background: var(--surface-soft);
+}
+.pay-option.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.pay-option input {
+  display: none;
+}
+.pay-icon {
+  font-size: 1.5rem;
+}
+.pay-option strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.pay-option small {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
 </style>

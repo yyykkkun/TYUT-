@@ -27,11 +27,17 @@ const accountLabel = computed(() => (auth.isLoggedIn ? auth.user.name : '登录'
     <div class="header-actions">
       <RouterLink class="header-link" to="/messages">消息 {{ messages.unreadCount }}</RouterLink>
       <RouterLink class="header-link" to="/cart">购物车 {{ cart.totalCount }}</RouterLink>
-      <RouterLink class="btn small" :to="auth.isLoggedIn ? '/member' : '/login'">{{ accountLabel }}</RouterLink>
+      <RouterLink class="btn small" :to="auth.isLoggedIn ? '/member' : '/login'">{{
+        accountLabel
+      }}</RouterLink>
     </div>
   </header>
 
-  <RouterView />
+  <RouterView v-slot="{ Component, route }">
+    <Transition name="route-fade" mode="out-in">
+      <component :is="Component" :key="route.fullPath" />
+    </Transition>
+  </RouterView>
 
   <footer class="app-footer">
     <span>Vue 3 + Vite + TypeScript + Pinia + Vue Router</span>

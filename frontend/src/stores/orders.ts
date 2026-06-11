@@ -26,7 +26,9 @@ export const useOrderStore = defineStore('orders', () => {
   const lastPreview = ref<OrderPreview | null>(null)
 
   const visibleOrders = computed(() =>
-    statusFilter.value === 'all' ? orders.value : orders.value.filter((item) => item.status === statusFilter.value),
+    statusFilter.value === 'all'
+      ? orders.value
+      : orders.value.filter((item) => item.status === statusFilter.value),
   )
 
   async function loadOrders(status = 'all', page = 1) {
