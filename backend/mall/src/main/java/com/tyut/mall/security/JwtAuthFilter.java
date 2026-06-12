@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,11 +64,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try {
             Long userId = jwtUtil.getUserIdFromToken(token);
+            String role = jwtUtil.getRoleFromToken(token);
             UserContext.setUserId(userId);
 
-            // 设置 Spring Security 认证上下文，否则 SecurityFilterChain 会拦截
+            // 设置 Spring Security 认证上下文，含角色
+            List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + (role != null ? role.toUpperCase() : "USER")));
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             chain.doFilter(request, response);
@@ -86,7 +90,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private void writeUnauthorized(HttpServletResponse response, String msg) throws IOException {
-        response.setStatus(200);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(ApiResponse.fail(401, msg).toJson());

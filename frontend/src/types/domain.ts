@@ -75,11 +75,16 @@ export interface Order {
   couponAmount: number
   pointsUsed: number
   giftCardAmount: number
+  balanceAmount: number
   freight: number
   total: number
   paidAt?: string
   deliveryNo?: string
   review?: string
+  rating?: number
+  paymentMethod?: string
+  refundStatus?: string
+  refundReason?: string
 }
 
 export interface Message {

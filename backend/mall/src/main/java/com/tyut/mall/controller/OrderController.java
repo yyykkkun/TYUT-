@@ -3,11 +3,14 @@ package com.tyut.mall.controller;
 import com.tyut.mall.common.ApiResponse;
 import com.tyut.mall.common.UserContext;
 import com.tyut.mall.dto.request.OrderPreviewRequest;
+import com.tyut.mall.dto.request.PaymentRequest;
 import com.tyut.mall.dto.request.ReviewRequest;
 import com.tyut.mall.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -44,9 +47,10 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/pay")
-    public ApiResponse<?> pay(@PathVariable Long id) {
+    public ApiResponse<?> pay(@PathVariable Long id, @RequestBody(required = false) PaymentRequest request) {
         Long userId = getUserId();
-        orderService.pay(userId, id);
+        String paymentMethod = request != null ? request.getPaymentMethod() : null;
+        orderService.pay(userId, id, paymentMethod);
         return ApiResponse.ok();
     }
 
@@ -67,7 +71,24 @@ public class OrderController {
     @PutMapping("/{id}/review")
     public ApiResponse<?> review(@PathVariable Long id, @Valid @RequestBody ReviewRequest request) {
         Long userId = getUserId();
-        orderService.review(userId, id, request.getReview());
+        orderService.review(userId, id, request.getReview(), request.getRating());
+        return ApiResponse.ok();
+    }
+
+    /** 申请退款 */
+    @PutMapping("/{id}/refund")
+    public ApiResponse<?> requestRefund(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        Long userId = getUserId();
+        String reason = body.getOrDefault("reason", "");
+        orderService.requestRefund(userId, id, reason);
+        return ApiResponse.ok();
+    }
+
+    /** 管理员审核退款 */
+    @PutMapping("/{id}/refund/approve")
+    public ApiResponse<?> approveRefund(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        boolean approved = body.getOrDefault("approved", false);
+        orderService.processRefund(id, approved);
         return ApiResponse.ok();
     }
 

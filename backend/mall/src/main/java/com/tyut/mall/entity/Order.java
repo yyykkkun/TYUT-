@@ -45,6 +45,19 @@ public class Order {
     @Builder.Default
     private BigDecimal giftCardAmount = BigDecimal.ZERO;
 
+    @Column(name = "balance_amount", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal balanceAmount = BigDecimal.ZERO;
+
+    @Column(name = "payment_method", length = 32)
+    private String paymentMethod;  // wechat / alipay / card / balance
+
+    @Column(name = "refund_status", length = 32)
+    private String refundStatus;  // null / pending / approved / rejected / completed
+
+    @Column(name = "refund_reason", length = 500)
+    private String refundReason;
+
     @Column(precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal freight = BigDecimal.ZERO;
@@ -60,6 +73,10 @@ public class Order {
 
     @Column(columnDefinition = "TEXT")
     private String review;
+
+    @Column
+    @Builder.Default
+    private Integer rating = 5;  // 1-5 星
 
     @Column(name = "created_at")
     @Builder.Default

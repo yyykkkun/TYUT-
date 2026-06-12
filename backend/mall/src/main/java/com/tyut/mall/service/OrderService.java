@@ -11,8 +11,10 @@ public interface OrderService {
     OrderVO detail(Long userId, Long orderId);
     OrderPreviewVO preview(Long userId, OrderPreviewRequest request);
     String create(Long userId, OrderPreviewRequest request);
-    void pay(Long userId, Long orderId);
+    void pay(Long userId, Long orderId, String paymentMethod);
     void cancel(Long userId, Long orderId);
     void confirm(Long userId, Long orderId);
-    void review(Long userId, Long orderId, String review);
+    void review(Long userId, Long orderId, String review, Integer rating);
+    void requestRefund(Long userId, Long orderId, String reason);
+    void processRefund(Long orderId, boolean approved);
 }

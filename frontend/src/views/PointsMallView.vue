@@ -5,8 +5,9 @@ import { useMemberStore } from '@/stores/member'
 const member = useMemberStore()
 const notice = ref('')
 
-onMounted(() => {
-  member.loadProfile()
+onMounted(async () => {
+  member.syncLocal()
+  await member.loadProfile()
 })
 
 async function exchange() {

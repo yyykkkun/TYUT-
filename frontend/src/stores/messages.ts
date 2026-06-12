@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { fetchMessages, markMessageRead } from '@/api/messages'
+import { fetchMessages, markMessageRead, markAllMessagesRead } from '@/api/messages'
 import type { Message } from '@/types/domain'
 
 export const useMessageStore = defineStore('messages', () => {
@@ -21,5 +21,12 @@ export const useMessageStore = defineStore('messages', () => {
     if (msg) msg.read = true
   }
 
-  return { messages, unreadCount, loadMessages, markRead }
+  async function markAllRead() {
+    await markAllMessagesRead()
+    messages.value.forEach((item) => {
+      item.read = true
+    })
+  }
+
+  return { messages, unreadCount, loadMessages, markRead, markAllRead }
 })

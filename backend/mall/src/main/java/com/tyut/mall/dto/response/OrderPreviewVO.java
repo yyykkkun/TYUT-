@@ -16,6 +16,8 @@ public class OrderPreviewVO {
     private BigDecimal couponAmount;
     private BigDecimal pointsAmount;
     private BigDecimal giftCardAmount;
+    private BigDecimal balanceAmount;
+    private BigDecimal memberDiscount;
     private BigDecimal freight;
     private BigDecimal total;
 }

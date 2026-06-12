@@ -29,13 +29,20 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (userRepository.findByUsername("demo@mall.test").isPresent()) {
-            // 更新密码为正确的 BCrypt 编码
             User demo = userRepository.findByUsername("demo@mall.test").get();
+            boolean changed = false;
             String encoded = passwordEncoder.encode("123456");
             if (!passwordEncoder.matches("123456", demo.getPassword())) {
                 demo.setPassword(encoded);
+                changed = true;
+            }
+            if (!"admin".equals(demo.getRole())) {
+                demo.setRole("admin");
+                changed = true;
+            }
+            if (changed) {
                 userRepository.save(demo);
-                log.info("演示用户密码已更新");
+                log.info("演示用户已更新");
             }
         } else {
             // 创建演示用户
@@ -50,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
                     .giftCard(BigDecimal.valueOf(120))
                     .growth(7420)
                     .status(1)
+                    .role("admin")
                     .build();
             demo = userRepository.save(demo);
             log.info("演示用户已创建: demo@mall.test / 123456");

@@ -18,6 +18,8 @@ const price = ref<OrderPreview>({
   couponAmount: 0,
   pointsAmount: 0,
   giftCardAmount: 0,
+  balanceAmount: 0,
+  memberDiscount: 0,
   freight: 0,
   total: 0,
 })
@@ -42,8 +44,10 @@ async function submit() {
   try {
     const orderId = await orders.submitOrder()
     if (orderId) {
+      // 从数据库同步最新余额/积分
+      await member.syncFromServer()
       cart.clearSelected()
-      router.push(`/orders/${orderId}`)
+      router.push(`/orders/${orderId}?pay=1`)
     }
   } catch (e: any) {
     alert(e.message || '下单失败')
@@ -53,12 +57,8 @@ async function submit() {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    cart.loadCart(),
-    member.loadAddresses(),
-    member.loadCoupons(),
-    member.loadProfile(),
-  ])
+  await member.syncFromServer()
+  await Promise.all([cart.loadCart(), member.loadAddresses(), member.loadCoupons()])
   loadPreview()
 })
 </script>
@@ -114,14 +114,25 @@ onMounted(async () => {
               </a-select>
             </a-form-item>
             <a-form-item>
-              <a-checkbox v-model:checked="orders.usePoints" @change="loadPreview">
-                使用积分抵扣，可用 {{ member.points }} 分
+              <a-checkbox v-model:checked="orders.usePoints" :disabled="member.points < 100" @change="loadPreview">
+                使用积分抵扣（100分=1元，单笔上限20元）
               </a-checkbox>
+              <div style="color: #8c8c8c; font-size: 0.8rem; margin-top: 2px;">
+                可用 {{ member.points }} 分 ≈ ￥{{ Math.floor(member.points / 100) }}
+                <span v-if="member.points < 100" style="color: var(--danger);">（积分不足，无法使用）</span>
+              </div>
             </a-form-item>
             <a-form-item>
               <a-checkbox v-model:checked="orders.useGiftCard" @change="loadPreview">
-                使用礼品卡，可用 ￥{{ member.giftCard }}
+                使用礼品卡（单笔上限50元）
               </a-checkbox>
+              <div style="color: #8c8c8c; font-size: 0.8rem; margin-top: 2px;">可用 ￥{{ member.giftCard }}</div>
+            </a-form-item>
+            <a-form-item>
+              <a-checkbox v-model:checked="orders.useBalance" @change="loadPreview">
+                使用余额支付（抵扣剩余待付金额）
+              </a-checkbox>
+              <div style="color: #8c8c8c; font-size: 0.8rem; margin-top: 2px;">可用 ￥{{ member.balance }}</div>
             </a-form-item>
           </a-form>
         </section>
@@ -133,6 +144,9 @@ onMounted(async () => {
           <div style="display: flex; justify-content: space-between;">
             <span style="color: #8c8c8c;">商品金额</span><strong style="font-size: 1.1rem;">￥{{ price.subtotal.toFixed(2) }}</strong>
           </div>
+          <div v-if="price.memberDiscount > 0" style="display: flex; justify-content: space-between;">
+            <span style="color: #8c8c8c;">会员折扣 ({{ member.level }})</span><strong style="color: var(--danger); font-size: 1.1rem;">-￥{{ price.memberDiscount.toFixed(2) }}</strong>
+          </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: #8c8c8c;">优惠券</span><strong style="color: var(--danger); font-size: 1.1rem;">-￥{{ price.couponAmount.toFixed(2) }}</strong>
           </div>
@@ -141,6 +155,9 @@ onMounted(async () => {
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: #8c8c8c;">礼品卡</span><strong style="color: var(--danger); font-size: 1.1rem;">-￥{{ price.giftCardAmount.toFixed(2) }}</strong>
+          </div>
+          <div v-if="price.balanceAmount > 0" style="display: flex; justify-content: space-between;">
+            <span style="color: #8c8c8c;">余额支付</span><strong style="color: var(--danger); font-size: 1.1rem;">-￥{{ price.balanceAmount.toFixed(2) }}</strong>
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: #8c8c8c;">运费</span><strong style="font-size: 1.1rem;">￥{{ price.freight.toFixed(2) }}</strong>

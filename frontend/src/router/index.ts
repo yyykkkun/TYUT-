@@ -7,53 +7,51 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
     { path: '/products', name: 'products', component: () => import('@/views/ProductsView.vue') },
-    {
-      path: '/products/:id',
-      name: 'product-detail',
-      component: () => import('@/views/ProductDetailView.vue'),
-    },
+    { path: '/products/:id', name: 'product-detail', component: () => import('@/views/ProductDetailView.vue') },
     { path: '/cart', name: 'cart', component: () => import('@/views/CartView.vue') },
     { path: '/checkout', name: 'checkout', component: () => import('@/views/CheckoutView.vue') },
     { path: '/orders', name: 'orders', component: () => import('@/views/OrdersView.vue') },
-    {
-      path: '/orders/:id',
-      name: 'order-detail',
-      component: () => import('@/views/OrderDetailView.vue'),
-    },
+    { path: '/orders/:id', name: 'order-detail', component: () => import('@/views/OrderDetailView.vue') },
     { path: '/member', name: 'member', component: () => import('@/views/member/MemberView.vue') },
-    {
-      path: '/member/addresses',
-      name: 'addresses',
-      component: () => import('@/views/member/AddressesView.vue'),
-    },
-    {
-      path: '/member/browse-history',
-      name: 'browse-history',
-      component: () => import('@/views/member/BrowseHistoryView.vue'),
-    },
-    {
-      path: '/member/reviews',
-      name: 'reviews',
-      component: () => import('@/views/member/ReviewsView.vue'),
-    },
-    {
-      path: '/promotions/seckill',
-      name: 'seckill',
-      component: () => import('@/views/promotions/SeckillView.vue'),
-    },
-    {
-      path: '/promotions/group-buy',
-      name: 'group-buy',
-      component: () => import('@/views/promotions/GroupBuyView.vue'),
-    },
-    {
-      path: '/points-mall',
-      name: 'points-mall',
-      component: () => import('@/views/PointsMallView.vue'),
-    },
+    { path: '/member/addresses', name: 'addresses', component: () => import('@/views/member/AddressesView.vue') },
+    { path: '/member/browse-history', name: 'browse-history', component: () => import('@/views/member/BrowseHistoryView.vue') },
+    { path: '/member/reviews', name: 'reviews', component: () => import('@/views/member/ReviewsView.vue') },
+    { path: '/member/balance', name: 'balance', component: () => import('@/views/member/BalanceView.vue') },
+    { path: '/member/points', name: 'points-history', component: () => import('@/views/member/PointsHistoryView.vue') },
+    { path: '/promotions/seckill', name: 'seckill', component: () => import('@/views/promotions/SeckillView.vue') },
+    { path: '/promotions/group-buy', name: 'group-buy', component: () => import('@/views/promotions/GroupBuyView.vue') },
+    { path: '/points-mall', name: 'points-mall', component: () => import('@/views/PointsMallView.vue') },
     { path: '/messages', name: 'messages', component: () => import('@/views/MessagesView.vue') },
+
+    // 管理后台
+    {
+      path: '/admin',
+      component: () => import('@/views/admin/AdminLayout.vue'),
+      meta: { requiresAdmin: true },
+      children: [
+        { path: '', name: 'admin', component: () => import('@/views/admin/DashboardView.vue') },
+        { path: 'products', name: 'admin-products', component: () => import('@/views/admin/ProductsView.vue') },
+        { path: 'orders', name: 'admin-orders', component: () => import('@/views/admin/OrdersView.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('@/views/admin/UsersView.vue') },
+        { path: 'refunds', name: 'admin-refunds', component: () => import('@/views/admin/RefundsView.vue') },
+        { path: 'group-buy', name: 'admin-group-buy', component: () => import('@/views/admin/GroupBuyView.vue') },
+      ],
+    },
+
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
+})
+
+// 路由守卫：管理员权限检查
+router.beforeEach((to, _from, next) => {
+  if (to.meta.requiresAdmin) {
+    const role = localStorage.getItem('mall-user-role') || ''
+    if (role !== 'admin') {
+      next('/login')
+      return
+    }
+  }
+  next()
 })
 
 export default router

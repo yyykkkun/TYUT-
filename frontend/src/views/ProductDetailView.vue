@@ -5,6 +5,8 @@ import { gsap } from 'gsap'
 import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import { useProductStore } from '@/stores/products'
+import { fetchProductReviews, type ProductReview } from '@/api/products'
+import { get, post, del } from '@/api/request'
 import type { Product } from '@/types/domain'
 
 const route = useRoute()
@@ -14,6 +16,14 @@ const cart = useCartStore()
 const quantity = ref(1)
 const selectedSpec = ref('')
 const detailProduct = ref<Product | undefined>(undefined)
+const reviews = ref<ProductReview[]>([])
+const reviewsLoading = ref(false)
+const favorited = ref(false)
+const favLoading = ref(false)
+
+// SKU 列表和联动
+const skus = ref<any[]>([])
+const currentSkuPrice = ref(0)
 
 const product = computed(
   () => detailProduct.value || productStore.getProduct(String(route.params.id)),
@@ -23,6 +33,40 @@ async function loadProduct() {
   const id = String(route.params.id)
   const p = await productStore.fetchDetail(id)
   if (p) detailProduct.value = p
+  // 加载评价、收藏状态、SKU
+  reviewsLoading.value = true
+  const [revs, favStatus, skuList] = await Promise.all([
+    fetchProductReviews(id),
+    get<{favorited: boolean}>(`/member/favorites/${id}/status`).catch(() => ({favorited: false})),
+    get<any[]>(`/products/${id}/skus`).catch(() => []),
+  ])
+  reviews.value = revs
+  favorited.value = favStatus.favorited
+  skus.value = skuList
+  if (skuList.length > 0) {
+    const first = skuList[0]
+    selectedSpec.value = first.spec
+    currentSkuPrice.value = first.price || p?.price || 0
+  }
+  reviewsLoading.value = false
+}
+
+async function toggleFavorite() {
+  favLoading.value = true
+  try {
+    if (favorited.value) {
+      await del(`/member/favorites/${String(route.params.id)}`)
+    } else {
+      await post(`/member/favorites/${String(route.params.id)}`)
+    }
+    favorited.value = !favorited.value
+  } finally { favLoading.value = false }
+}
+
+function onSpecChange(spec: string) {
+  selectedSpec.value = spec
+  const sku = skus.value.find((s: any) => s.spec === spec)
+  currentSkuPrice.value = sku?.price || detailProduct.value?.price || 0
 }
 
 onMounted(loadProduct)
@@ -105,7 +149,7 @@ function shareProduct() {
       <h1>{{ product.title }}</h1>
       <p>{{ product.subtitle }}</p>
       <div class="price-line">
-        <strong>￥{{ product.price }}</strong>
+        <strong>￥{{ skus.length ? currentSkuPrice.toFixed(2) : product.price }}</strong>
         <span v-if="product.originalPrice">￥{{ product.originalPrice }}</span>
       </div>
       <div class="facts">
@@ -115,7 +159,7 @@ function shareProduct() {
       </div>
       <div class="specs" style="margin: 24px 0;">
         <div style="margin-bottom: 8px; font-weight: bold; color: #595959;">规格</div>
-        <a-radio-group v-model:value="selectedSpec" option-type="button" button-style="solid" size="large">
+        <a-radio-group v-model:value="selectedSpec" option-type="button" button-style="solid" size="large" @change="(e: any) => onSpecChange(e.target.value)">
           <a-radio-button v-for="spec in product.specs" :key="spec" :value="spec">
             {{ spec }}
           </a-radio-button>
@@ -133,9 +177,46 @@ function shareProduct() {
           立即购买
         </a-button>
         <a-button type="dashed" size="large" @click="shareProduct" style="height: 48px;">分享</a-button>
+        <a-button type="text" size="large" :loading="favLoading" @click="toggleFavorite" style="height: 48px; font-size: 1.3rem;">
+          {{ favorited ? '❤️' : '🤍' }}
+        </a-button>
       </div>
     </section>
   </main>
+
+  <!-- 商品评价 -->
+  <section class="page-section">
+    <div class="section-heading">
+      <h2>商品评价 ({{ reviews.length }})</h2>
+    </div>
+
+    <a-spin v-if="reviewsLoading" style="display:block; text-align:center; padding: 20px;" />
+
+    <a-collapse v-else-if="reviews.length" :bordered="false" style="background: var(--surface); border-radius: 12px;">
+      <a-collapse-panel v-for="r in reviews" :key="r.id" style="border-bottom: 1px solid var(--line);">
+        <template #header>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <a-avatar :src="r.userAvatar" :size="36" style="flex-shrink:0;">
+              {{ r.userName.charAt(0) }}
+            </a-avatar>
+            <div>
+              <strong>{{ r.userName }}</strong>
+              <span style="color: var(--ink-muted); margin-left: 8px; font-size: 0.85rem;">{{ r.createdAt?.slice(0, 10) }}</span>
+            </div>
+            <span style="margin-left: auto; color: var(--warning);">{{ '⭐'.repeat(r.rating || 5) }} {{ r.rating || 5 }}.0</span>
+          </div>
+        </template>
+        <p style="margin: 0 0 12px; color: var(--ink); line-height: 1.7;">{{ r.content }}</p>
+        <div v-if="r.images.length" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <img v-for="(img, i) in r.images" :key="i" :src="img" style="width:80px; height:80px; object-fit:cover; border-radius:6px;" />
+        </div>
+      </a-collapse-panel>
+    </a-collapse>
+
+    <div v-else style="text-align:center; color: var(--ink-muted); padding: 20px;">
+      暂无评价，购买后快来评价吧
+    </div>
+  </section>
 
   <section class="page-section">
     <div class="section-heading">

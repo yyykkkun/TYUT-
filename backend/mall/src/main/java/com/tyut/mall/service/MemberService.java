@@ -5,6 +5,7 @@ import com.tyut.mall.dto.response.AddressVO;
 import com.tyut.mall.dto.response.CouponVO;
 import com.tyut.mall.dto.response.MemberProfileVO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface MemberService {
@@ -17,4 +18,6 @@ public interface MemberService {
     boolean exchangeCoupon(Long userId, Integer points);
     List<String> browseHistory(Long userId);
     void addBrowseHistory(Long userId, Long productId);
+    void recharge(Long userId, BigDecimal amount);
+    void updateAvatar(Long userId, String avatarUrl);
 }

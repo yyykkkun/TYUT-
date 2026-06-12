@@ -37,6 +37,10 @@ public class User {
     @Builder.Default
     private String level = "普通会员";
 
+    @Column(length = 16)
+    @Builder.Default
+    private String role = "user";  // user / admin
+
     @Column(precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal balance = BigDecimal.ZERO;

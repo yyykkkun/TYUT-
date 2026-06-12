@@ -28,6 +28,7 @@ public class MemberServiceImpl implements MemberService {
     private final CouponRepository couponRepository;
     private final BrowseHistoryRepository browseHistoryRepository;
     private final MessageRepository messageRepository;
+    private final BalanceRecordRepository balanceRecordRepository;
 
     @Override
     public MemberProfileVO profile(Long userId) {
@@ -160,6 +161,27 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
+    public void updateAvatar(Long userId, String avatarUrl) {
+        User user = findUser(userId);
+        user.setAvatar(avatarUrl);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void recharge(Long userId, BigDecimal amount) {
+        User user = findUser(userId);
+        user.setBalance(user.getBalance().add(amount));
+        userRepository.save(user);
+        balanceRecordRepository.save(BalanceRecord.builder()
+                .userId(userId).amount(amount).type("recharge")
+                .balanceAfter(user.getBalance()).remark("余额充值")
+                .build());
+    }
+
+    @Override
+    @Transactional
     public void addBrowseHistory(Long userId, Long productId) {
         // 先删除已有，再插入（保证去重+置顶）
         browseHistoryRepository.deleteByUserIdAndProductId(userId, productId);

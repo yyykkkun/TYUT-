@@ -1,46 +1,165 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import EmptyState from '@/components/EmptyState.vue'
 import OrderStatusTag from '@/components/OrderStatusTag.vue'
 import { useOrderStore } from '@/stores/orders'
+import { useMemberStore } from '@/stores/member'
+import { uploadFiles } from '@/api/upload'
+import { put } from '@/api/request'
 import type { Order } from '@/types/domain'
 
 const route = useRoute()
+const router = useRouter()
 const orders = useOrderStore()
+const member = useMemberStore()
 
 const order = ref<Order | undefined>(undefined)
+const loading = ref(false)
 const review = ref('商品体验不错，物流也很及时。')
+const rating = ref(5)
+
+// 评论图片
+const reviewImages = ref<string[]>([])
+const uploading = ref(false)
 
 // 支付弹窗
 const showPayModal = ref(false)
-const payMethod = ref<'wechat' | 'alipay' | 'card'>('wechat')
+const payMethod = ref<'wechat' | 'alipay' | 'card' | 'balance'>('wechat')
 const paying = ref(false)
+const payError = ref('')
+
+// 30分钟倒计时
+const PAY_TIMEOUT_MIN = 30
+const remainingSeconds = ref(0)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+const countdownText = computed(() => {
+  if (remainingSeconds.value <= 0) return ''
+  const m = Math.floor(remainingSeconds.value / 60)
+  const s = remainingSeconds.value % 60
+  return `${m}分${s}秒`
+})
+
+function startCountdown() {
+  stopCountdown()
+  if (!order.value || order.value.status !== 'pending_payment') return
+  const created = new Date(order.value.createdAt.replace(' ', 'T'))
+  if (isNaN(created.getTime())) return
+  const deadline = created.getTime() + PAY_TIMEOUT_MIN * 60 * 1000
+
+  const tick = () => {
+    const left = Math.max(0, Math.floor((deadline - Date.now()) / 1000))
+    remainingSeconds.value = left
+    if (left <= 0) {
+      stopCountdown()
+      doCancel()
+    }
+  }
+  tick()
+  countdownTimer = setInterval(tick, 1000)
+}
+
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+onUnmounted(stopCountdown)
 
 const payMethods = [
   { key: 'wechat' as const, label: '微信支付', icon: '💚', desc: '微信安全支付' },
   { key: 'alipay' as const, label: '支付宝', icon: '💙', desc: '支付宝安全支付' },
   { key: 'card' as const, label: '银行卡', icon: '💳', desc: '支持主流银行借记卡/信用卡' },
+  { key: 'balance' as const, label: '余额支付', icon: '💰', desc: '使用账户余额直接支付' },
 ]
+
+function paymentLabel(method?: string) {
+  const map: Record<string, string> = { wechat: '微信支付', alipay: '支付宝', card: '银行卡', balance: '余额支付' }
+  return method ? map[method] || method : '—'
+}
 
 async function loadOrder() {
   const id = String(route.params.id)
-  order.value = await orders.getOrder(id)
+  loading.value = true
+  try {
+    await orders.loadOrders()
+    let result = orders.orders.find((item) => item.id === id)
+    if (!result) {
+      result = await orders.getOrder(id)
+    }
+    if (result) {
+      // 已过期未支付订单自动取消
+      if (result.status === 'pending_payment') {
+        const created = new Date(result.createdAt.replace(' ', 'T'))
+        if (!isNaN(created.getTime()) && Date.now() - created.getTime() > PAY_TIMEOUT_MIN * 60 * 1000) {
+          result.status = 'cancelled'
+          await orders.cancel(id).catch(() => {})
+        }
+      }
+      order.value = result
+      // 自动打开支付弹窗
+      if (route.query.pay === '1' && result.status === 'pending_payment') {
+        router.replace({ path: `/orders/${id}` })
+        setTimeout(() => openPay(), 300)
+      }
+      startCountdown()
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
-onMounted(loadOrder)
-watch(() => route.params.id, loadOrder)
+let autoRefreshTimer: ReturnType<typeof setInterval> | null = null
 
-function openPay() {
+onMounted(() => {
+  loadOrder()
+  // paid/shipping 状态每 10 秒自动刷新，等待卖家发货
+  autoRefreshTimer = setInterval(async () => {
+    if (order.value && (order.value.status === 'paid' || order.value.status === 'shipping')) {
+      await loadOrder()
+    }
+  }, 10000)
+})
+
+watch(() => route.params.id, () => {
+  loadOrder()
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer)
+})
+
+onUnmounted(() => {
+  stopCountdown()
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer)
+})
+
+async function openPay() {
+  payError.value = ''
+  member.syncLocal()
+  await member.loadProfile()
   showPayModal.value = true
 }
 
 async function doPay() {
   if (!order.value || paying.value) return
+  payError.value = ''
+
+  if (payMethod.value === 'balance' && member.balance < order.value.total) {
+    payError.value = `余额不足（当前 ￥${member.balance}，需支付 ￥${order.value.total}）`
+    return
+  }
+
   paying.value = true
   try {
-    await orders.pay(order.value.id)
+    await orders.pay(order.value.id, payMethod.value)
     showPayModal.value = false
+    stopCountdown()
+    // 乐观更新 + 同步数据源
+    order.value.status = 'paid'
+    order.value.paidAt = new Date().toISOString().replace('T', ' ').slice(0, 19)
+    order.value.paymentMethod = payMethod.value
+    await member.syncFromServer()
     await loadOrder()
   } finally {
     paying.value = false
@@ -49,19 +168,60 @@ async function doPay() {
 
 async function doConfirm() {
   if (!order.value) return
+  order.value.status = 'completed'
   await orders.confirm(order.value.id)
+  member.syncLocal()
   await loadOrder()
 }
 
 async function doCancel() {
   if (!order.value) return
+  order.value.status = 'cancelled'
+  stopCountdown()
   await orders.cancel(order.value.id)
+  member.syncLocal()
   await loadOrder()
+}
+
+async function handleUpload(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  uploading.value = true
+  try {
+    const urls = await uploadFiles(Array.from(input.files))
+    reviewImages.value.push(...urls)
+  } finally {
+    uploading.value = false
+    input.value = ''
+  }
+}
+
+function removeImage(idx: number) {
+  reviewImages.value.splice(idx, 1)
+}
+
+async function doRefund() {
+  if (!order.value) return
+  const reason = prompt('请输入退款原因：')
+  if (!reason) return
+  try {
+    await put(`/orders/${order.value.id}/refund`, { reason })
+    order.value.refundStatus = 'pending'
+    order.value.refundReason = reason
+    alert('退款申请已提交，请等待审核')
+  } catch (e: any) {
+    alert(e.message || '申请失败')
+  }
 }
 
 async function doReview() {
   if (!order.value) return
-  await orders.review(order.value.id, review.value)
+  let text = review.value
+  if (reviewImages.value.length) {
+    text += '\n[图片]' + reviewImages.value.join(',')
+  }
+  await orders.review(order.value.id, text, rating.value)
+  reviewImages.value = []
   await loadOrder()
 }
 </script>
@@ -131,9 +291,29 @@ async function doReview() {
         <section v-if="order.status === 'completed'" class="panel">
           <h2>评价晒单</h2>
           <blockquote v-if="order.review">{{ order.review }}</blockquote>
-          <div v-else class="form-grid">
-            <textarea v-model="review" rows="4" placeholder="分享你的购物体验..."></textarea>
-            <button class="btn" type="button" @click="doReview">提交评价</button>
+          <div v-else>
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <span style="font-weight:700;">评分：</span>
+              <a-rate v-model:value="rating" :count="5" />
+            </div>
+            <textarea v-model="review" rows="4" placeholder="分享你的购物体验..." style="width:100%; margin-bottom:12px;"></textarea>
+            <!-- 已选图片预览 -->
+            <div v-if="reviewImages.length" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+              <div v-for="(url, idx) in reviewImages" :key="idx" style="position:relative; width:80px; height:80px;">
+                <img :src="url" style="width:80px; height:80px; object-fit:cover; border-radius:6px;" />
+                <button
+                  @click="removeImage(idx)"
+                  style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; border:none; background:var(--danger); color:#fff; font-size:12px; cursor:pointer; line-height:20px;"
+                >×</button>
+              </div>
+            </div>
+            <!-- 上传按钮 -->
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--primary); font-weight:700; margin-bottom:12px;">
+              📷 {{ uploading ? '上传中...' : '添加图片' }}
+              <input type="file" multiple accept="image/*" style="display:none;" @change="handleUpload" :disabled="uploading" />
+            </label>
+            <br/>
+            <button class="btn primary" type="button" @click="doReview" :disabled="uploading">提交评价</button>
           </div>
         </section>
       </div>
@@ -150,11 +330,22 @@ async function doReview() {
         <p>
           <span>礼品卡</span><strong>-￥{{ order.giftCardAmount }}</strong>
         </p>
+        <p v-if="order.balanceAmount > 0">
+          <span>余额支付</span><strong>-￥{{ order.balanceAmount }}</strong>
+        </p>
         <p>
           <span>运费</span><strong>￥{{ order.freight }}</strong>
         </p>
         <p class="total">
           <span>实付</span><strong>￥{{ order.total }}</strong>
+        </p>
+        <p v-if="order.paymentMethod" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0;">
+          <span>支付方式</span><strong>{{ paymentLabel(order.paymentMethod) }}</strong>
+        </p>
+
+        <!-- 倒计时 -->
+        <p v-if="order.status === 'pending_payment' && remainingSeconds > 0" style="text-align: center; color: var(--warning); font-weight: 700; margin-bottom: 8px;">
+          ⏱ 请在 {{ countdownText }} 内完成支付，超时自动取消
         </p>
 
         <!-- 操作按钮 -->
@@ -179,6 +370,21 @@ async function doReview() {
         >
           取消订单
         </button>
+        <!-- 退款按钮 -->
+        <button
+          v-if="(order.status === 'completed' || order.status === 'paid') && (!order.refundStatus || order.refundStatus === 'rejected')"
+          class="btn subtle block"
+          style="color: var(--danger);"
+          @click="doRefund"
+        >
+          申请退款
+        </button>
+        <p v-if="order.refundStatus === 'pending'" style="color: var(--warning); text-align: center; font-weight: 700;">
+          退款审核中
+        </p>
+        <p v-if="order.refundStatus === 'completed'" style="color: var(--success); text-align: center; font-weight: 700;">
+          已退款
+        </p>
       </aside>
     </section>
 
@@ -189,6 +395,8 @@ async function doReview() {
         <p class="modal-amount">
           应付金额 <strong>￥{{ order.total }}</strong>
         </p>
+
+        <p v-if="payError" style="color: var(--danger); background: var(--danger-soft); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem;">{{ payError }}</p>
 
         <div class="pay-methods">
           <label
@@ -216,6 +424,9 @@ async function doReview() {
     </div>
   </main>
 
+  <div v-else-if="loading" style="padding: 40px; text-align: center;">
+    <a-spin size="large" />
+  </div>
   <EmptyState v-else title="订单不存在" action-text="返回订单中心" action-to="/orders" />
 </template>
 

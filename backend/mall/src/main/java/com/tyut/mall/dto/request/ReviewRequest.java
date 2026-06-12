@@ -7,4 +7,5 @@ import lombok.Data;
 public class ReviewRequest {
     @NotBlank(message = "评价内容不能为空")
     private String review;
+    private Integer rating = 5;
 }

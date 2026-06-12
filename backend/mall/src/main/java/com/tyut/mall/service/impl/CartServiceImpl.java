@@ -34,6 +34,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void add(Long userId, AddCartRequest request) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> ApiException.notFound("商品不存在"));
@@ -61,6 +62,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void updateQuantity(Long userId, Long cartItemId, Integer quantity) {
         CartItem item = findOwnCartItem(userId, cartItemId);
         item.setQuantity(Math.max(1, quantity));
@@ -68,6 +70,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void toggleSelect(Long userId, Long cartItemId) {
         CartItem item = findOwnCartItem(userId, cartItemId);
         item.setSelected(item.getSelected() == 1 ? 0 : 1);
@@ -75,6 +78,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void remove(Long userId, Long cartItemId) {
         CartItem item = findOwnCartItem(userId, cartItemId);
         cartItemRepository.delete(item);

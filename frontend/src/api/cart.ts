@@ -9,6 +9,15 @@ export interface CartItemWithProduct extends CartItem {
 const STORAGE_KEY = 'mall-mock-cart'
 let useMock = false
 
+import { isBackendReachable } from '@/api/request'
+
+function shouldSkipMock(e: unknown): boolean {
+  if (!isMockSession()) return true
+  if (e instanceof Error && e.message === 'Backend unreachable') return false
+  if (e instanceof Error && e.message.includes('未登录')) return true
+  return false
+}
+
 // ===== localStorage 作为 mock 数据的唯一数据源 =====
 
 function loadMockCart(): CartItemWithProduct[] {
@@ -39,7 +48,8 @@ export async function fetchCart(): Promise<CartItemWithProduct[]> {
   if (useMock) return loadMockCart()
   try {
     return await get<CartItemWithProduct[]>('/cart')
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     console.warn('后端不可用，降级为本地 mock 数据')
     return loadMockCart()
@@ -67,7 +77,8 @@ export async function addToCart(productId: string, spec: string, quantity = 1): 
   }
   try {
     return await post<void>('/cart', { productId: Number(productId), spec, quantity })
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     return addToCart(productId, spec, quantity)
   }
@@ -83,7 +94,8 @@ export async function updateCartQuantity(id: string, quantity: number): Promise<
   }
   try {
     return await put<void>(`/cart/${id}`, { quantity })
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     return updateCartQuantity(id, quantity)
   }
@@ -99,7 +111,8 @@ export async function toggleCartSelect(id: string): Promise<void> {
   }
   try {
     return await patch<void>(`/cart/${id}/select`)
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     return toggleCartSelect(id)
   }
@@ -115,7 +128,8 @@ export async function removeCartItem(id: string): Promise<void> {
   }
   try {
     return await del<void>(`/cart/${id}`)
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     return removeCartItem(id)
   }
@@ -130,7 +144,8 @@ export async function clearSelectedCart(): Promise<void> {
   }
   try {
     return await del<void>('/cart/selected')
-  } catch {
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
     useMock = true
     return clearSelectedCart()
   }

@@ -10,6 +10,7 @@ import {
   fetchProductDetail,
 } from '@/api/products'
 import { addBrowseHistory } from '@/api/member'
+import { products as mockProducts } from '@/data/mock'
 import type { Product, Category } from '@/types/domain'
 
 export type ProductSort = 'composite' | 'priceAsc' | 'priceDesc' | 'sales' | 'popularity' | 'latest'
@@ -30,10 +31,20 @@ export interface ProductFilters {
 const allBrands = ref<string[]>([])
 const allCities = ref<string[]>([])
 
+function loadBrowseFromStorage(): string[] {
+  try {
+    const raw = localStorage.getItem('mall-browse-history')
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
 export const useProductStore = defineStore('products', () => {
   const products = ref<Product[]>([])
   const categories = ref<Category[]>([])
-  const browseHistory = ref<string[]>([])
+  // 浏览记录：优先从 localStorage 恢复
+  const browseHistory = ref<string[]>(loadBrowseFromStorage())
   const total = ref(0)
   const totalPages = ref(1)
   const loading = ref(false)
@@ -153,7 +164,25 @@ export const useProductStore = defineStore('products', () => {
   }
 
   function getProduct(id: string): Product | undefined {
-    return products.value.find((item) => item.id === id)
+    // 在所有已加载的产品中查找
+    const all = [
+      ...products.value,
+      ...latestProducts.value,
+      ...hotProducts.value,
+      ...specialProducts.value,
+      ...recommendedProducts.value,
+    ]
+    const found = all.find((item) => item.id === id)
+    if (found) return found
+    // 回退到 mock 数据
+    return mockProducts.find((item) => item.id === id)
+  }
+
+  /** 根据浏览记录 ID 列表获取对应的 Product 数组 */
+  function getBrowseHistoryProducts(ids: string[]): Product[] {
+    return ids
+      .map((id) => getProduct(id))
+      .filter((p): p is Product => Boolean(p))
   }
 
   async function fetchDetail(id: string): Promise<Product | undefined> {
@@ -203,6 +232,7 @@ export const useProductStore = defineStore('products', () => {
     loadProducts,
     loadHomeData,
     getProduct,
+    getBrowseHistoryProducts,
     fetchDetail,
     viewProduct,
     patchFilters,

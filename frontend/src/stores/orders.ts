@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useCartStore } from '@/stores/cart'
+import { useMemberStore } from '@/stores/member'
 import type { DeliveryMethod, Order, OrderStatus } from '@/types/domain'
 import {
   fetchOrders as apiOrders,
@@ -22,6 +23,7 @@ export const useOrderStore = defineStore('orders', () => {
   const deliveryMethod = ref<DeliveryMethod>('platform')
   const usePoints = ref(true)
   const useGiftCard = ref(false)
+  const useBalance = ref(false)
   const loading = ref(false)
   const lastPreview = ref<OrderPreview | null>(null)
 
@@ -47,6 +49,7 @@ export const useOrderStore = defineStore('orders', () => {
       deliveryMethod: deliveryMethod.value,
       usePoints: usePoints.value,
       useGiftCard: useGiftCard.value,
+      useBalance: useBalance.value,
       couponId: selectedCouponId.value || null,
     }
     const result = await previewOrder(params)
@@ -55,10 +58,16 @@ export const useOrderStore = defineStore('orders', () => {
   }
 
   async function submitOrder(): Promise<string> {
+    // 积分不足100时自动取消勾选
+    const member = useMemberStore()
+    if (usePoints.value && member.points < 100) {
+      usePoints.value = false
+    }
     const params: OrderCreateParams = {
       deliveryMethod: deliveryMethod.value,
       usePoints: usePoints.value,
       useGiftCard: useGiftCard.value,
+      useBalance: useBalance.value,
       couponId: selectedCouponId.value || null,
     }
     const orderNo = await createOrder(params)
@@ -74,8 +83,8 @@ export const useOrderStore = defineStore('orders', () => {
     }
   }
 
-  async function pay(id: string) {
-    await payOrder(id)
+  async function pay(id: string, paymentMethod?: string) {
+    await payOrder(id, paymentMethod)
     await loadOrders()
   }
 
@@ -89,8 +98,8 @@ export const useOrderStore = defineStore('orders', () => {
     await loadOrders()
   }
 
-  async function review(id: string, text: string) {
-    await reviewOrder(id, text)
+  async function review(id: string, text: string, ratingVal: number = 5) {
+    await reviewOrder(id, text, ratingVal)
     await loadOrders()
   }
 
@@ -101,6 +110,7 @@ export const useOrderStore = defineStore('orders', () => {
     deliveryMethod,
     usePoints,
     useGiftCard,
+    useBalance,
     loading,
     lastPreview,
     visibleOrders,

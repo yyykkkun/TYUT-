@@ -1,15 +1,36 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { BellOutlined, ShoppingCartOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/messages'
+import { isMockSession } from '@/api/request'
 
 const cart = useCartStore()
 const auth = useAuthStore()
 const messages = useMessageStore()
 
 const accountLabel = computed(() => (auth.isLoggedIn ? auth.user.name : '登录'))
+
+onMounted(async () => {
+  // 真实后端模式：彻底清空所有 mock 脏数据
+  if (!isMockSession()) {
+    localStorage.removeItem('mall-mock-orders')
+    localStorage.removeItem('mall-mock-cart')
+    localStorage.removeItem('mall-mock-addresses')
+    localStorage.removeItem('mall-mock-profile')
+    localStorage.removeItem('mall-mock-balance-records')
+    localStorage.removeItem('mall-mock-points-records')
+    localStorage.removeItem('mall-mock-messages-read')
+  }
+  // 恢复用户信息
+  if (auth.isLoggedIn) {
+    auth.fetchMe()
+  }
+  cart.loadCart()
+  messages.loadMessages()
+  setInterval(() => messages.loadMessages(), 30000)
+})
 </script>
 
 <template>
@@ -26,6 +47,7 @@ const accountLabel = computed(() => (auth.isLoggedIn ? auth.user.name : '登录'
           <RouterLink to="/promotions/group-buy" class="nav-link">团购</RouterLink>
           <RouterLink to="/orders" class="nav-link">订单</RouterLink>
           <RouterLink to="/member" class="nav-link">会员</RouterLink>
+          <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link" style="color: var(--primary); font-weight: 700;">管理后台</RouterLink>
         </nav>
       </div>
       <div style="display: flex; align-items: center; gap: 24px;">

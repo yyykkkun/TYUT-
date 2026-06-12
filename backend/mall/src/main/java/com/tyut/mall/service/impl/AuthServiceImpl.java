@@ -41,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
             throw ApiException.badRequest("账号已被禁用");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return LoginVO.builder()
                 .token(token)
                 .user(toUserVO(user))
@@ -60,15 +60,15 @@ public class AuthServiceImpl implements AuthService {
                 .phone(request.getPhone())
                 .nickname(request.getNickname() != null ? request.getNickname() : request.getUsername())
                 .level("普通会员")
-                .balance(BigDecimal.valueOf(100))
-                .points(500)
+                .balance(BigDecimal.ZERO)
+                .points(0)
                 .giftCard(BigDecimal.ZERO)
                 .growth(0)
                 .status(1)
                 .build();
         user = userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return LoginVO.builder()
                 .token(token)
                 .user(toUserVO(user))
@@ -87,16 +87,16 @@ public class AuthServiceImpl implements AuthService {
                             .phone(request.getPhone())
                             .nickname(nickname)
                             .level("普通会员")
-                            .balance(BigDecimal.valueOf(688))
-                            .points(2680)
-                            .giftCard(BigDecimal.valueOf(120))
-                            .growth(7420)
+                            .balance(BigDecimal.ZERO)
+                            .points(0)
+                            .giftCard(BigDecimal.ZERO)
+                            .growth(0)
                             .status(1)
                             .build();
                     return userRepository.save(newUser);
                 });
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return LoginVO.builder()
                 .token(token)
                 .user(toUserVO(user))
@@ -116,6 +116,7 @@ public class AuthServiceImpl implements AuthService {
                 .name(user.getNickname())
                 .account(user.getUsername())
                 .level(user.getLevel())
+                .role(user.getRole())
                 .build();
     }
 }

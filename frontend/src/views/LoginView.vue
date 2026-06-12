@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -8,6 +8,35 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const tab = ref<'login' | 'register'>('login')
+const backendAvailable = ref<boolean | null>(null)  // null=检测中
+const checking = ref(false)
+
+// 用公开接口检测后端是否可达
+async function checkBackend() {
+  checking.value = true
+  backendAvailable.value = null
+  try {
+    const res = await fetch('/api/products?pageSize=1')
+    backendAvailable.value = res.ok
+    if (res.ok) {
+      // 后端可达 → 如果是 mock 假 token，清掉
+      const token = localStorage.getItem('mall-token') || ''
+      if (token === 'mock-jwt-token-demo') {
+        localStorage.removeItem('mall-token')
+        localStorage.removeItem('mall-user-name')
+        localStorage.removeItem('mall-user-account')
+      }
+    }
+  } catch {
+    backendAvailable.value = false
+  } finally {
+    checking.value = false
+  }
+}
+
+onMounted(() => {
+  checkBackend()
+})
 
 // 登录表单
 const loginAccount = ref('demo@mall.test')
@@ -84,7 +113,7 @@ async function doRegister() {
               <a-input-password v-model:value="loginPassword" size="large" placeholder="输入密码" />
             </a-form-item>
             <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+              <a-button type="primary" html-type="submit" size="large" block :loading="submitting" @click.prevent="doLogin">
                 登录
               </a-button>
             </a-form-item>
@@ -107,7 +136,7 @@ async function doRegister() {
               <a-input-password v-model:value="regConfirm" size="large" placeholder="再次输入密码" />
             </a-form-item>
             <a-form-item>
-              <a-button type="primary" html-type="submit" size="large" block :loading="submitting">
+              <a-button type="primary" html-type="submit" size="large" block :loading="submitting" @click.prevent="doRegister">
                 注册并登录
               </a-button>
             </a-form-item>

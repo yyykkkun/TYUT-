@@ -22,9 +22,12 @@ public class OrderVO {
     private BigDecimal couponAmount;
     private Integer pointsUsed;
     private BigDecimal giftCardAmount;
+    private BigDecimal balanceAmount;
     private BigDecimal freight;
     private BigDecimal total;
     private String paidAt;
     private String deliveryNo;
     private String review;
+    private Integer rating;
+    private String paymentMethod;
 }
