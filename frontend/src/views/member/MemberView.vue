@@ -7,11 +7,7 @@ import {
   HistoryOutlined,
   CommentOutlined,
   MailOutlined,
-  GiftOutlined,
   WalletOutlined,
-  TrophyOutlined,
-  PropertySafetyOutlined,
-  CreditCardOutlined,
   BellOutlined,
   PlusOutlined,
 } from '@ant-design/icons-vue'
@@ -29,9 +25,11 @@ const uploadingAvatar = ref(false)
 async function handleAvatarUpload(e: Event) {
   const input = e.target as HTMLInputElement
   if (!input.files?.length) return
+  const file = input.files[0]
+  if (!file) return
   uploadingAvatar.value = true
   try {
-    const url = await uploadFile(input.files[0])
+    const url = await uploadFile(file)
     try { await put('/member/avatar', { url }) } catch { /* mock */ }
     auth.user.avatar = url
     localStorage.setItem('mall-user-avatar', url)
@@ -54,15 +52,6 @@ const payMethods = [
   { key: 'alipay' as const, label: '支付宝', icon: '💙' },
   { key: 'card' as const, label: '银行卡', icon: '💳' },
 ]
-
-function levelColor(level: string) {
-  const map: Record<string, string> = { '钻石会员': 'purple', '黄金会员': 'gold', '白银会员': 'silver', '青铜会员': 'orange' }
-  return map[level] || 'default'
-}
-function discountText(level: string) {
-  const map: Record<string, string> = { '钻石会员': '95折', '黄金会员': '97折', '白银会员': '98折' }
-  return map[level] || ''
-}
 
 function openRecharge(amount: number) {
   rechargeAmount.value = amount
@@ -90,6 +79,7 @@ onMounted(async () => {
   member.syncLocal()
   await member.loadAll()
   messages.loadMessages()
+  messages.loadConversations()
 })
 </script>
 
@@ -109,14 +99,12 @@ onMounted(async () => {
             <input type="file" accept="image/*" style="display:none;" @change="handleAvatarUpload" />
           </label>
           <div>
-            <p style="margin: 0 0 8px; opacity: 0.9; font-size: 0.9rem;">会员中心</p>
+            <p style="margin: 0 0 8px; opacity: 0.9; font-size: 0.9rem;">个人买卖中心</p>
             <h1 style="margin: 0 0 8px; color: #fff; font-size: 2rem;">
               {{ auth.isLoggedIn ? auth.user.name : '游客，请登录' }}
             </h1>
             <p v-if="auth.isLoggedIn" style="margin: 0; opacity: 0.9;">
-              <a-tag :color="levelColor(member.level)" style="border: none;">{{ member.level }}</a-tag>
-              成长值 {{ member.growth }}
-              <span v-if="member.level !== '普通会员'" style="margin-left: 4px;">（{{ discountText(member.level) }}）</span>
+              买家和卖家为同一身份，可浏览、购买、沟通和发布闲置
             </p>
           </div>
         </div>
@@ -134,7 +122,7 @@ onMounted(async () => {
 
     <!-- Metrics -->
     <a-row :gutter="[16, 16]" style="margin-bottom: 24px;">
-      <a-col :xs="12" :sm="8" :md="4">
+      <a-col :xs="12" :sm="8" :md="6">
         <a-card :bordered="false" style="text-align: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" @click="openRecharge(100)">
           <WalletOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
           <div style="color: #8c8c8c; font-size: 0.9rem;">余额 <PlusOutlined style="font-size: 12px;" /></div>
@@ -144,35 +132,28 @@ onMounted(async () => {
           </div>
         </a-card>
       </a-col>
-      <a-col :xs="12" :sm="8" :md="5">
+      <a-col :xs="12" :sm="8" :md="6">
         <a-card :bordered="false" style="text-align: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-          <TrophyOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
-          <div style="color: #8c8c8c; font-size: 0.9rem;">积分</div>
-          <strong style="font-size: 1.25rem;">{{ member.points }}</strong>
+          <ShoppingOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
+          <div style="color: #8c8c8c; font-size: 0.9rem;">交易订单</div>
+          <strong style="font-size: 1.25rem;">买卖记录</strong>
           <div style="margin-top: 4px;">
-            <RouterLink to="/member/points" style="font-size: 0.8rem; color: var(--primary);">明细 ›</RouterLink>
+            <RouterLink to="/orders" style="font-size: 0.8rem; color: var(--primary);">查看 ›</RouterLink>
           </div>
         </a-card>
       </a-col>
-      <a-col :xs="12" :sm="8" :md="5">
+      <a-col :xs="12" :sm="8" :md="6">
         <a-card :bordered="false" style="text-align: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-          <PropertySafetyOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
-          <div style="color: #8c8c8c; font-size: 0.9rem;">优惠券</div>
-          <strong style="font-size: 1.25rem;">{{ member.availableCoupons.length }} 张</strong>
+          <CommentOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
+          <div style="color: #8c8c8c; font-size: 0.9rem;">用户评分</div>
+          <strong style="font-size: 1.25rem;">4.8 分</strong>
         </a-card>
       </a-col>
-      <a-col :xs="12" :sm="8" :md="5">
-        <a-card :bordered="false" style="text-align: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-          <CreditCardOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
-          <div style="color: #8c8c8c; font-size: 0.9rem;">礼品卡</div>
-          <strong style="font-size: 1.25rem;">￥{{ member.giftCard }}</strong>
-        </a-card>
-      </a-col>
-      <a-col :xs="12" :sm="8" :md="5">
+      <a-col :xs="12" :sm="8" :md="6">
         <a-card :bordered="false" style="text-align: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
           <BellOutlined style="font-size: 24px; color: var(--primary); margin-bottom: 8px;" />
-          <div style="color: #8c8c8c; font-size: 0.9rem;">未读消息</div>
-          <strong style="font-size: 1.25rem;">{{ messages.unreadCount }}</strong>
+          <div style="color: #8c8c8c; font-size: 0.9rem;">未读沟通</div>
+          <strong style="font-size: 1.25rem;">{{ messages.chatUnreadCount + messages.unreadCount }}</strong>
         </a-card>
       </a-col>
     </a-row>
@@ -201,19 +182,19 @@ onMounted(async () => {
         <a-col :xs="8" :sm="6" :md="4">
           <RouterLink to="/member/reviews" class="quick-link">
             <CommentOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary);" />
-            <span>评论晒单</span>
+            <span>用户评价</span>
           </RouterLink>
         </a-col>
         <a-col :xs="8" :sm="6" :md="4">
           <RouterLink to="/messages" class="quick-link">
             <MailOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary);" />
-            <span>站内信</span>
+            <span>沟通消息</span>
           </RouterLink>
         </a-col>
         <a-col :xs="8" :sm="6" :md="4">
-          <RouterLink to="/points-mall" class="quick-link">
-            <GiftOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary);" />
-            <span>积分商城</span>
+          <RouterLink to="/messages/notifications" class="quick-link">
+            <BellOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary);" />
+            <span>消息通知</span>
           </RouterLink>
         </a-col>
       </a-row>

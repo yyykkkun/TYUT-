@@ -32,8 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/login/anonymous",
             "/api/products",
             "/api/products/",
-            "/api/categories",
-            "/api/promotions/"
+            "/api/categories"
     );
 
     @Override

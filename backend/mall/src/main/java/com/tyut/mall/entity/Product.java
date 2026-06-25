@@ -65,7 +65,7 @@ public class Product {
     private String specs;  // JSON 数组字符串
 
     @Column(length = 32)
-    private String promotion;  // seckill / group-buy / special
+    private String promotion;
 
     @Builder.Default
     private Integer status = 1;  // 0下架 1上架

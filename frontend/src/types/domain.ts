@@ -13,6 +13,9 @@ export interface Product {
   subtitle: string
   category: string
   brand: string
+  sellerName?: string
+  sellerRating?: number
+  condition?: string
   origin: string
   city: string
   tags: string[]
@@ -25,7 +28,7 @@ export interface Product {
   image: string
   specs: string[]
   createdAt: string
-  promotion?: 'seckill' | 'group-buy' | 'special'
+  listingType?: 'idle' | 'urgent' | 'campus'
 }
 
 export interface CartItem {
@@ -91,7 +94,29 @@ export interface Message {
   id: string
   title: string
   body: string
-  type: 'price' | 'promotion' | 'order'
+  type: 'price' | 'order' | 'chat' | 'system'
   read: boolean
   createdAt: string
+}
+
+export interface Conversation {
+  id: string
+  productId: string
+  productTitle: string
+  productImage: string
+  buyerName: string
+  sellerName: string
+  lastMessage: string
+  updatedAt: string
+  unread: number
+}
+
+export interface ChatMessage {
+  id: string
+  conversationId: string
+  senderName: string
+  senderRole: 'buyer' | 'seller'
+  content: string
+  createdAt: string
+  self: boolean
 }

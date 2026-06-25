@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { BellOutlined, ShoppingCartOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { computed, onMounted, ref } from 'vue'
+import { MenuOutlined, MessageOutlined, ShoppingCartOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/messages'
@@ -9,8 +9,17 @@ import { isMockSession } from '@/api/request'
 const cart = useCartStore()
 const auth = useAuthStore()
 const messages = useMessageStore()
+const mobileNavOpen = ref(false)
 
 const accountLabel = computed(() => (auth.isLoggedIn ? auth.user.name : '登录'))
+const messageBadgeCount = computed(() => messages.unreadCount + messages.chatUnreadCount)
+const navItems = computed(() => [
+  { to: '/products', label: '闲置市场', show: true },
+  { to: '/messages', label: '沟通', show: true },
+  { to: '/orders', label: '订单', show: true },
+  { to: '/member', label: '个人中心', show: true },
+  { to: '/admin', label: '管理后台', show: auth.isAdmin, admin: true },
+])
 
 onMounted(async () => {
   // 真实后端模式：彻底清空所有 mock 脏数据
@@ -29,44 +38,65 @@ onMounted(async () => {
   }
   cart.loadCart()
   messages.loadMessages()
-  setInterval(() => messages.loadMessages(), 30000)
+  messages.loadConversations()
+  setInterval(() => {
+    messages.loadMessages()
+    messages.loadConversations()
+  }, 30000)
 })
 </script>
 
 <template>
-  <a-config-provider :theme="{ token: { colorPrimary: '#10b981', borderRadius: 8 } }">
-    <header class="app-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100;">
-      <div style="display: flex; align-items: center; gap: 32px;">
-        <RouterLink to="/" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-          <span style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--primary); color: #fff; border-radius: 8px; font-weight: bold;">校</span>
-          <strong style="font-size: 1.1rem;">校园优选商城</strong>
+  <a-config-provider :theme="{ token: { colorPrimary: '#0f9f86', borderRadius: 8 } }">
+    <header class="app-header">
+      <div class="header-left">
+        <RouterLink class="brand" to="/" @click="mobileNavOpen = false">
+          <span>校</span>
+          <strong>校园二手交易</strong>
         </RouterLink>
-        <nav style="display: flex; gap: 8px;">
-          <RouterLink to="/products" class="nav-link">商品</RouterLink>
-          <RouterLink to="/promotions/seckill" class="nav-link">秒杀</RouterLink>
-          <RouterLink to="/promotions/group-buy" class="nav-link">团购</RouterLink>
-          <RouterLink to="/orders" class="nav-link">订单</RouterLink>
-          <RouterLink to="/member" class="nav-link">会员</RouterLink>
-          <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link" style="color: var(--primary); font-weight: 700;">管理后台</RouterLink>
+        <nav class="main-nav" aria-label="主导航">
+          <RouterLink
+            v-for="item in navItems.filter((nav) => nav.show)"
+            :key="item.to"
+            :to="item.to"
+            :class="{ 'nav-admin': item.admin }"
+          >
+            {{ item.label }}
+          </RouterLink>
         </nav>
       </div>
-      <div style="display: flex; align-items: center; gap: 24px;">
-        <RouterLink to="/messages" style="color: inherit; text-decoration: none;">
-          <a-badge :count="messages.unreadCount" :offset="[5, -5]">
-            <BellOutlined style="font-size: 20px; cursor: pointer; color: #595959;" />
+      <div class="header-actions">
+        <RouterLink class="header-link" to="/messages" aria-label="消息">
+          <a-badge :count="messageBadgeCount" :offset="[5, -5]">
+            <MessageOutlined />
           </a-badge>
         </RouterLink>
-        <RouterLink to="/cart" style="color: inherit; text-decoration: none;">
+        <RouterLink class="header-link" to="/cart" aria-label="购物车">
           <a-badge id="cart-icon" :count="cart.totalCount" :offset="[5, -5]">
-            <ShoppingCartOutlined style="font-size: 20px; cursor: pointer; color: #595959;" />
+            <ShoppingCartOutlined />
           </a-badge>
         </RouterLink>
-        <a-button type="primary" shape="round" @click="$router.push(auth.isLoggedIn ? '/member' : '/login')">
+        <a-button class="account-button" type="primary" @click="$router.push(auth.isLoggedIn ? '/member' : '/login')">
           <template #icon><UserOutlined /></template>
           {{ accountLabel }}
         </a-button>
+        <a-button class="mobile-menu-button" :aria-expanded="mobileNavOpen" @click="mobileNavOpen = !mobileNavOpen">
+          <template #icon><MenuOutlined /></template>
+        </a-button>
       </div>
     </header>
+
+    <div v-if="mobileNavOpen" class="mobile-nav-panel">
+      <RouterLink
+        v-for="item in navItems.filter((nav) => nav.show)"
+        :key="item.to"
+        :to="item.to"
+        :class="{ 'nav-admin': item.admin }"
+        @click="mobileNavOpen = false"
+      >
+        {{ item.label }}
+      </RouterLink>
+    </div>
 
     <RouterView v-slot="{ Component, route }">
       <Transition name="route-fade" mode="out-in">
@@ -74,27 +104,5 @@ onMounted(async () => {
       </Transition>
     </RouterView>
 
-    <footer style="text-align: center; padding: 24px; color: #8c8c8c; background: #fafafa; margin-top: 40px;">
-      <p style="margin: 0;">Vue 3 + Vite + TypeScript + Pinia + Vue Router + Ant Design Vue</p>
-    </footer>
   </a-config-provider>
 </template>
-
-<style scoped>
-.nav-link {
-  padding: 6px 12px;
-  color: #595959;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-.nav-link:hover {
-  background: #f0f0f0;
-  color: #262626;
-}
-.nav-link.router-link-active {
-  color: var(--primary);
-  background: var(--primary-soft);
-  font-weight: 600;
-}
-</style>

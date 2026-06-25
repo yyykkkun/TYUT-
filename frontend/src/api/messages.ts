@@ -1,10 +1,13 @@
 import { get, put } from '@/api/request'
-import type { Message } from '@/types/domain'
-import { messages as mockMessages } from '@/data/mock'
+import type { ChatMessage, Conversation, Message } from '@/types/domain'
+import { chatMessages as mockChatMessages, conversations as mockConversations, messages as mockMessages } from '@/data/mock'
+import { isMockSession } from '@/api/request'
 
 let useMock = false
 const MSG_READ_KEY = 'mall-mock-messages-read'
 const MSG_STORE_KEY = 'mall-mock-messages'
+const CONVERSATION_STORE_KEY = 'mall-mock-conversations'
+const CHAT_STORE_KEY = 'mall-mock-chat-messages'
 
 /** 保存 mock 消息列表到 localStorage */
 function loadMockMessages(): Message[] {
@@ -21,7 +24,7 @@ function saveMockMessages(msgs: Message[]) {
 }
 
 /** 给 mock 模式创建一条消息通知 */
-export function addMockMessage(title: string, body: string, type: string = 'order') {
+export function addMockMessage(title: string, body: string, type: Message['type'] = 'order') {
   if (useMock) {
     const msgs = loadMockMessages()
     msgs.unshift({
@@ -35,8 +38,6 @@ export function addMockMessage(title: string, body: string, type: string = 'orde
     saveMockMessages(msgs)
   }
 }
-
-import { isBackendReachable } from '@/api/request'
 
 function shouldSkipMock(e: unknown): boolean {
   if (!isMockSession()) return true
@@ -120,4 +121,69 @@ export async function markAllMessagesRead(): Promise<void> {
     useMock = true
     saveAllRead()
   }
+}
+
+function loadConversations(): Conversation[] {
+  try {
+    const raw = localStorage.getItem(CONVERSATION_STORE_KEY)
+    return raw ? JSON.parse(raw) : mockConversations
+  } catch {
+    return [...mockConversations]
+  }
+}
+
+function saveConversations(items: Conversation[]) {
+  localStorage.setItem(CONVERSATION_STORE_KEY, JSON.stringify(items))
+}
+
+function loadChatMessages(): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(CHAT_STORE_KEY)
+    return raw ? JSON.parse(raw) : mockChatMessages
+  } catch {
+    return [...mockChatMessages]
+  }
+}
+
+function saveChatMessages(items: ChatMessage[]) {
+  localStorage.setItem(CHAT_STORE_KEY, JSON.stringify(items))
+}
+
+export async function fetchConversations(): Promise<Conversation[]> {
+  return loadConversations()
+}
+
+export async function fetchChatMessages(conversationId: string): Promise<ChatMessage[]> {
+  return loadChatMessages().filter((item) => item.conversationId === conversationId)
+}
+
+export async function sendLocalChatMessage(conversationId: string, content: string): Promise<ChatMessage> {
+  const createdAt = new Date().toISOString().replace('T', ' ').slice(0, 16)
+  const message: ChatMessage = {
+    id: `cm${Date.now()}`,
+    conversationId,
+    senderName: '我',
+    senderRole: 'buyer',
+    content,
+    createdAt,
+    self: true,
+  }
+  const messages = [...loadChatMessages(), message]
+  saveChatMessages(messages)
+
+  const conversations = loadConversations()
+  const idx = conversations.findIndex((item) => item.id === conversationId)
+  if (idx >= 0) {
+    const current = conversations[idx]
+    if (!current) return message
+    conversations[idx] = {
+      ...current,
+      lastMessage: content,
+      updatedAt: createdAt,
+      unread: 0,
+    }
+    saveConversations(conversations)
+  }
+
+  return message
 }

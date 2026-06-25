@@ -1,4 +1,4 @@
-import { get, post, put } from '@/api/request'
+import { get, post, put, isMockSession } from '@/api/request'
 import type { Order, OrderItem, Address } from '@/types/domain'
 import {
   addresses as mockAddresses,
@@ -30,8 +30,6 @@ export interface OrderCreateParams {
 const STORAGE_KEY = 'mall-mock-orders'
 const CART_KEY = 'mall-mock-cart'
 let useMock = false
-
-import { isBackendReachable } from '@/api/request'
 
 function shouldSkipMock(e: unknown): boolean {
   if (!isMockSession()) return true

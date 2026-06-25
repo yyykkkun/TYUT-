@@ -1,4 +1,4 @@
-import { get, post, put, patch, del } from '@/api/request'
+import { get, post, put, patch, del, isMockSession } from '@/api/request'
 import type { CartItem, Product } from '@/types/domain'
 import { products as mockProducts } from '@/data/mock'
 
@@ -8,8 +8,6 @@ export interface CartItemWithProduct extends CartItem {
 
 const STORAGE_KEY = 'mall-mock-cart'
 let useMock = false
-
-import { isBackendReachable } from '@/api/request'
 
 function shouldSkipMock(e: unknown): boolean {
   if (!isMockSession()) return true

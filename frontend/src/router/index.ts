@@ -17,11 +17,17 @@ const router = createRouter({
     { path: '/member/browse-history', name: 'browse-history', component: () => import('@/views/member/BrowseHistoryView.vue') },
     { path: '/member/reviews', name: 'reviews', component: () => import('@/views/member/ReviewsView.vue') },
     { path: '/member/balance', name: 'balance', component: () => import('@/views/member/BalanceView.vue') },
-    { path: '/member/points', name: 'points-history', component: () => import('@/views/member/PointsHistoryView.vue') },
-    { path: '/promotions/seckill', name: 'seckill', component: () => import('@/views/promotions/SeckillView.vue') },
-    { path: '/promotions/group-buy', name: 'group-buy', component: () => import('@/views/promotions/GroupBuyView.vue') },
-    { path: '/points-mall', name: 'points-mall', component: () => import('@/views/PointsMallView.vue') },
     { path: '/messages', name: 'messages', component: () => import('@/views/MessagesView.vue') },
+    {
+      path: '/messages/notifications',
+      name: 'message-notifications',
+      component: () => import('@/views/MessageNotificationsView.vue'),
+    },
+    {
+      path: '/messages/:id',
+      name: 'message-chat',
+      component: () => import('@/views/MessageChatView.vue'),
+    },
 
     // 管理后台
     {
@@ -34,7 +40,6 @@ const router = createRouter({
         { path: 'orders', name: 'admin-orders', component: () => import('@/views/admin/OrdersView.vue') },
         { path: 'users', name: 'admin-users', component: () => import('@/views/admin/UsersView.vue') },
         { path: 'refunds', name: 'admin-refunds', component: () => import('@/views/admin/RefundsView.vue') },
-        { path: 'group-buy', name: 'admin-group-buy', component: () => import('@/views/admin/GroupBuyView.vue') },
       ],
     },
 

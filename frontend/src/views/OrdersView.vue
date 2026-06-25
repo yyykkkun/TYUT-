@@ -15,7 +15,6 @@ onMounted(() => {
   <main class="stack-page" style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
     <div class="page-title" style="margin-bottom: 32px;">
       <h1 style="font-size: 2rem; margin-bottom: 8px;">订单中心</h1>
-      <p style="color: #8c8c8c; margin: 0;">查看全部、待付款、待发货、待收货、已完成订单。</p>
     </div>
 
     <a-tabs v-model:activeKey="orders.statusFilter" size="large" style="margin-bottom: 24px;">

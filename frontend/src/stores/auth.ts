@@ -32,6 +32,8 @@ export const useAuthStore = defineStore('auth', () => {
     // 清空 localStorage 中的 mock 数据（订单、购物车）
     localStorage.removeItem('mall-mock-orders')
     localStorage.removeItem('mall-mock-cart')
+    localStorage.removeItem('mall-mock-conversations')
+    localStorage.removeItem('mall-mock-chat-messages')
 
     // 清空会员数据
     const member = useMemberStore()

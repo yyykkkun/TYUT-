@@ -1,4 +1,4 @@
-import { get, post, put, del } from '@/api/request'
+import { get, post, put, del, isMockSession } from '@/api/request'
 import type { Address, Coupon } from '@/types/domain'
 import { addresses as mockAddresses, coupons as mockCoupons } from '@/data/mock'
 
@@ -100,7 +100,7 @@ const defaultProfile: MemberProfile = {
   points: 2680,
   giftCard: 120,
   growth: 7420,
-  level: '黄金会员',
+  level: '普通用户',
   couponCount: 3,
   unreadCount: 2,
 }
@@ -139,8 +139,6 @@ export function deductGiftCard(amount: number): MemberProfile {
   saveProfile(p)
   return p
 }
-
-import { isBackendReachable } from '@/api/request'
 
 function shouldSkipMock(e: unknown): boolean {
   if (!isMockSession()) return true  // 真实后端：永不降级 mock

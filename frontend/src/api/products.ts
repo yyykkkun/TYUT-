@@ -1,4 +1,4 @@
-import { get } from '@/api/request'
+import { get, isMockSession } from '@/api/request'
 import type { Product, Category } from '@/types/domain'
 import { products as mockProducts, categories as mockCategories } from '@/data/mock'
 
@@ -12,8 +12,6 @@ interface ProductPage {
 
 // 是否使用 mock（后端不可用时自动降级）
 let useMock = false
-
-import { isBackendReachable } from '@/api/request'
 
 function shouldSkipMock(e: unknown): boolean {
   if (!isMockSession()) return true
@@ -51,7 +49,7 @@ export function fetchProductDetail(id: string): Promise<Product> {
     return Promise.resolve(p as Product)
   }
   return get<Product>(`/products/${id}`).catch((e) => {
-    if (isAuthError(e)) throw e
+    if (shouldSkipMock(e)) throw e
     useMock = true
     const p = mockProducts.find((p) => p.id === id)
     return p as Product
@@ -73,7 +71,7 @@ export const fetchLatestProducts = fallback(
 
 export const fetchSpecialProducts = fallback(
   () => get<Product[]>('/products/special'),
-  mockProducts.filter((p) => p.promotion === 'special'),
+  mockProducts.filter((p) => p.listingType === 'campus' || p.listingType === 'urgent'),
 )
 
 export const fetchRecommendedProducts = fallback(
@@ -82,16 +80,6 @@ export const fetchRecommendedProducts = fallback(
 )
 
 export const fetchCategories = fallback(() => get<Category[]>('/categories'), mockCategories)
-
-export const fetchSeckillProducts = fallback(
-  () => get<Product[]>('/promotions/seckill'),
-  mockProducts.filter((p) => p.promotion === 'seckill'),
-)
-
-export const fetchGroupBuyProducts = fallback(
-  () => get<Product[]>('/promotions/group-buy'),
-  mockProducts.filter((p) => p.promotion === 'group-buy'),
-)
 
 export interface ProductReview {
   id: string
@@ -105,8 +93,8 @@ export interface ProductReview {
 }
 
 const mockReviews: Record<string, ProductReview[]> = {
-  p1001: [{ id: 'r1', orderId: 'SO20260601001', userName: '李同学', rating: 5, content: '蓝莓很新鲜，包装也很用心，冷链运输到家还是冰的。', images: [], createdAt: '2026-06-02 10:30' }],
-  p1002: [{ id: 'r2', orderId: 'SO20260601002', userName: '王同学', rating: 5, content: '降噪效果很好，地铁上几乎听不到噪音，续航也够用。', images: [], createdAt: '2026-06-03 14:20' }],
+  p1001: [{ id: 'r1', orderId: 'SO20260601001', userName: '李同学', rating: 5, content: '卖家很爽快，Kindle 和描述一致，当面验货也很耐心。', images: [], createdAt: '2026-06-02 10:30' }],
+  p1002: [{ id: 'r2', orderId: 'SO20260601002', userName: '张同学', rating: 5, content: '耳机成色不错，约在校门口交易很方便。', images: [], createdAt: '2026-06-03 14:20' }],
 }
 
 export async function fetchProductReviews(productId: string): Promise<ProductReview[]> {

@@ -2,6 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
+import EmptyState from '@/components/EmptyState.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useProductStore } from '@/stores/products'
 
@@ -41,19 +42,23 @@ function runPageMotion() {
   if (!pageRef.value) return
   pageCtx?.revert()
   pageCtx = gsap.context(() => {
-    gsap.set('.hero__content > *, .category-strip a, .page-section', { autoAlpha: 1 })
+    const heroItems = gsap.utils.toArray('.hero__content > *')
+    const categoryItems = gsap.utils.toArray('.category-strip a')
+    const sections = gsap.utils.toArray('.page-section')
+    gsap.set([...heroItems, ...categoryItems, ...sections], { autoAlpha: 1 })
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-    tl.from('.hero__content > *', {
+    tl.from(heroItems, {
       autoAlpha: 0,
       y: 26,
       duration: 0.58,
       stagger: 0.075,
       clearProps: 'transform,opacity,visibility',
     })
-      .from(
-        '.category-strip a',
+    if (categoryItems.length) {
+      tl.from(
+        categoryItems,
         {
           autoAlpha: 0,
           y: 18,
@@ -63,8 +68,10 @@ function runPageMotion() {
         },
         '-=0.18',
       )
-      .from(
-        '.page-section',
+    }
+    if (sections.length) {
+      tl.from(
+        sections,
         {
           autoAlpha: 0,
           y: 22,
@@ -74,6 +81,7 @@ function runPageMotion() {
         },
         '-=0.08',
       )
+    }
   }, pageRef.value)
 }
 
@@ -81,7 +89,9 @@ function runCardMotion() {
   if (!pageRef.value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   cardCtx?.revert()
   cardCtx = gsap.context(() => {
-    gsap.from('.product-grid .product-card', {
+    const cards = gsap.utils.toArray('.product-grid .product-card')
+    if (!cards.length) return
+    gsap.from(cards, {
       autoAlpha: 0,
       y: 18,
       duration: 0.34,
@@ -102,16 +112,13 @@ function search() {
   <div ref="pageRef" class="home-page">
     <section class="hero">
       <div class="hero__content">
-        <p class="eyebrow">综合电商买家端 MVP</p>
-        <h1>校园优选商城</h1>
-        <p>商品浏览、筛选、加购、下单、模拟支付、物流与评价的前端闭环演示。</p>
         <a-input-search
           v-model:value="keyword"
-          placeholder="搜索蓝莓、耳机、收纳盒"
+          class="hero-search"
+          placeholder="搜索耳机、教材、收纳架"
           enter-button="搜索"
           size="large"
           @search="search"
-          style="max-width: 480px; margin-top: 24px;"
         />
       </div>
     </section>
@@ -128,44 +135,47 @@ function search() {
 
     <section class="page-section">
       <div class="section-heading">
-        <h2>最新商品</h2>
+        <h2>最新闲置</h2>
         <RouterLink to="/products?sort=latest">查看全部</RouterLink>
       </div>
-      <div class="product-grid">
+      <div v-if="productStore.latestProducts.length" class="product-grid">
         <ProductCard
           v-for="product in productStore.latestProducts"
           :key="product.id"
           :product="product"
         />
       </div>
+      <EmptyState v-else title="暂时没有最新闲置" action-text="去市场看看" action-to="/products" />
     </section>
 
     <section class="page-section">
       <div class="section-heading">
-        <h2>热卖与特卖</h2>
-        <RouterLink to="/promotions/seckill">限时活动</RouterLink>
+        <h2>同校好物</h2>
+        <RouterLink to="/products?sort=popularity">查看市场</RouterLink>
       </div>
-      <div class="product-grid">
+      <div v-if="productStore.specialProducts.length" class="product-grid">
         <ProductCard
           v-for="product in productStore.specialProducts"
           :key="product.id"
           :product="product"
         />
       </div>
+      <EmptyState v-else title="同校好物正在整理中" action-text="查看市场" action-to="/products" />
     </section>
 
     <section class="page-section">
       <div class="section-heading">
-        <h2>猜你喜欢</h2>
+        <h2>可能感兴趣</h2>
         <RouterLink to="/member/browse-history">浏览记录</RouterLink>
       </div>
-      <div class="product-grid">
+      <div v-if="productStore.recommendedProducts.length" class="product-grid">
         <ProductCard
           v-for="product in productStore.recommendedProducts"
           :key="product.id"
           :product="product"
         />
       </div>
+      <EmptyState v-else title="还没有推荐内容" action-text="浏览闲置" action-to="/products" />
     </section>
   </div>
 </template>

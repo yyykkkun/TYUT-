@@ -2,12 +2,19 @@
 import { computed, ref, watchEffect, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gsap } from 'gsap'
+import {
+  HeartFilled,
+  HeartOutlined,
+  MessageOutlined,
+  ShareAltOutlined,
+  ShoppingCartOutlined,
+} from '@ant-design/icons-vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import { useProductStore } from '@/stores/products'
 import { fetchProductReviews, type ProductReview } from '@/api/products'
 import { get, post, del } from '@/api/request'
-import type { Product } from '@/types/domain'
+import type { Conversation, Product } from '@/types/domain'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +27,7 @@ const reviews = ref<ProductReview[]>([])
 const reviewsLoading = ref(false)
 const favorited = ref(false)
 const favLoading = ref(false)
+const startingChat = ref(false)
 
 // SKU 列表和联动
 const skus = ref<any[]>([])
@@ -105,7 +113,7 @@ async function addToCart(goCheckout = false) {
       zIndex: '1000',
       pointerEvents: 'none',
       borderRadius: '8px',
-      opacity: '0.8'
+      opacity: '0.8',
     })
     document.body.appendChild(clone)
     
@@ -119,12 +127,39 @@ async function addToCart(goCheckout = false) {
       onComplete: () => {
         document.body.removeChild(clone)
         gsap.fromTo(cartIcon, { scale: 1 }, { scale: 1.3, duration: 0.15, yoyo: true, repeat: 1 })
-      }
+      },
     })
   }
 
   await cart.addItem(product.value.id, selectedSpec.value, quantity.value)
   if (goCheckout) router.push('/cart')
+}
+
+async function startChat() {
+  if (!product.value || startingChat.value) return
+  startingChat.value = true
+  try {
+    const raw = localStorage.getItem('mall-mock-conversations')
+    const list: Conversation[] = raw ? JSON.parse(raw) : []
+    let conversation = list.find((item) => item.productId === product.value?.id)
+    if (!conversation) {
+      conversation = {
+        id: `c${Date.now()}`,
+        productId: product.value.id,
+        productTitle: product.value.title,
+        productImage: product.value.image,
+        buyerName: '我',
+        sellerName: product.value.sellerName || product.value.brand || '卖家',
+        lastMessage: '我想了解一下这件闲置。',
+        updatedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        unread: 0,
+      }
+      localStorage.setItem('mall-mock-conversations', JSON.stringify([conversation, ...list]))
+    }
+    router.push(`/messages/${conversation.id}`)
+  } finally {
+    startingChat.value = false
+  }
 }
 
 function shareProduct() {
@@ -145,7 +180,7 @@ function shareProduct() {
       <img :src="product.image" :alt="product.title" />
     </section>
     <section class="detail-info">
-      <p class="eyebrow">{{ product.brand }} · {{ product.city }}</p>
+      <p class="eyebrow">{{ product.sellerName || product.brand }} · {{ product.city }}</p>
       <h1>{{ product.title }}</h1>
       <p>{{ product.subtitle }}</p>
       <div class="price-line">
@@ -153,32 +188,43 @@ function shareProduct() {
         <span v-if="product.originalPrice">￥{{ product.originalPrice }}</span>
       </div>
       <div class="facts">
-        <span>库存 {{ product.stock }}</span>
-        <span>销量 {{ product.sales }}</span>
-        <span>评分 {{ product.rating }}</span>
+        <span>{{ product.stock > 0 ? '可交易' : '已转出' }}</span>
+        <span>{{ product.condition || '成色待沟通' }}</span>
+        <span>卖家评分 {{ product.sellerRating || product.rating }}</span>
       </div>
-      <div class="specs" style="margin: 24px 0;">
-        <div style="margin-bottom: 8px; font-weight: bold; color: #595959;">规格</div>
+      <div class="detail-field">
+        <div class="detail-field__label">规格</div>
         <a-radio-group v-model:value="selectedSpec" option-type="button" button-style="solid" size="large" @change="(e: any) => onSpecChange(e.target.value)">
           <a-radio-button v-for="spec in product.specs" :key="spec" :value="spec">
             {{ spec }}
           </a-radio-button>
         </a-radio-group>
       </div>
-      <div style="margin-bottom: 32px;">
-        <div style="margin-bottom: 8px; font-weight: bold; color: #595959;">数量</div>
+      <div class="detail-field">
+        <div class="detail-field__label">数量</div>
         <a-input-number v-model:value="quantity" :min="1" :max="Math.max(product.stock, 1)" size="large" />
       </div>
-      <div class="action-row" style="display: flex; gap: 16px;">
-        <a-button size="large" :disabled="product.stock <= 0" @click="addToCart(false)" style="flex: 1; height: 48px;">
+      <div class="action-row detail-actions">
+        <a-button size="large" :disabled="product.stock <= 0" @click="addToCart(false)">
+          <template #icon><ShoppingCartOutlined /></template>
           加入购物车
         </a-button>
-        <a-button type="primary" size="large" :disabled="product.stock <= 0" @click="addToCart(true)" style="flex: 1; height: 48px;">
+        <a-button type="primary" size="large" :disabled="product.stock <= 0" @click="addToCart(true)">
           立即购买
         </a-button>
-        <a-button type="dashed" size="large" @click="shareProduct" style="height: 48px;">分享</a-button>
-        <a-button type="text" size="large" :loading="favLoading" @click="toggleFavorite" style="height: 48px; font-size: 1.3rem;">
-          {{ favorited ? '❤️' : '🤍' }}
+        <a-button size="large" :loading="startingChat" @click="startChat">
+          <template #icon><MessageOutlined /></template>
+          联系卖家
+        </a-button>
+        <a-button size="large" @click="shareProduct">
+          <template #icon><ShareAltOutlined /></template>
+          分享
+        </a-button>
+        <a-button class="favorite-button" size="large" :loading="favLoading" @click="toggleFavorite" :aria-label="favorited ? '取消收藏' : '收藏'">
+          <template #icon>
+            <HeartFilled v-if="favorited" />
+            <HeartOutlined v-else />
+          </template>
         </a-button>
       </div>
     </section>
@@ -187,40 +233,40 @@ function shareProduct() {
   <!-- 商品评价 -->
   <section class="page-section">
     <div class="section-heading">
-      <h2>商品评价 ({{ reviews.length }})</h2>
+      <h2>交易评价 ({{ reviews.length }})</h2>
     </div>
 
-    <a-spin v-if="reviewsLoading" style="display:block; text-align:center; padding: 20px;" />
+    <a-spin v-if="reviewsLoading" class="center-spin" />
 
-    <a-collapse v-else-if="reviews.length" :bordered="false" style="background: var(--surface); border-radius: 12px;">
-      <a-collapse-panel v-for="r in reviews" :key="r.id" style="border-bottom: 1px solid var(--line);">
+    <a-collapse v-else-if="reviews.length" class="review-list" :bordered="false">
+      <a-collapse-panel v-for="r in reviews" :key="r.id">
         <template #header>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <a-avatar :src="r.userAvatar" :size="36" style="flex-shrink:0;">
+          <div class="review-head">
+            <a-avatar :src="r.userAvatar" :size="36">
               {{ r.userName.charAt(0) }}
             </a-avatar>
             <div>
               <strong>{{ r.userName }}</strong>
-              <span style="color: var(--ink-muted); margin-left: 8px; font-size: 0.85rem;">{{ r.createdAt?.slice(0, 10) }}</span>
+              <span>{{ r.createdAt?.slice(0, 10) }}</span>
             </div>
-            <span style="margin-left: auto; color: var(--warning);">{{ '⭐'.repeat(r.rating || 5) }} {{ r.rating || 5 }}.0</span>
+            <span class="review-rating">{{ r.rating || 5 }}.0 分</span>
           </div>
         </template>
-        <p style="margin: 0 0 12px; color: var(--ink); line-height: 1.7;">{{ r.content }}</p>
-        <div v-if="r.images.length" style="display:flex; gap:8px; flex-wrap:wrap;">
-          <img v-for="(img, i) in r.images" :key="i" :src="img" style="width:80px; height:80px; object-fit:cover; border-radius:6px;" />
+        <p class="review-content">{{ r.content }}</p>
+        <div v-if="r.images.length" class="review-images">
+          <img v-for="(img, i) in r.images" :key="i" :src="img" :alt="`评价图片 ${i + 1}`" />
         </div>
       </a-collapse-panel>
     </a-collapse>
 
-    <div v-else style="text-align:center; color: var(--ink-muted); padding: 20px;">
-      暂无评价，购买后快来评价吧
+    <div v-else class="muted-empty">
+      暂无评价，完成交易后可以评价卖家
     </div>
   </section>
 
   <section class="page-section">
     <div class="section-heading">
-      <h2>浏览该商品的人还浏览了</h2>
+      <h2>看过这件闲置的人还看了</h2>
     </div>
     <div class="product-grid">
       <ProductCard v-for="item in related" :key="item.id" :product="item" />

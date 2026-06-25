@@ -43,7 +43,7 @@ async function quickAdd(e: Event) {
       zIndex: '1000',
       pointerEvents: 'none',
       borderRadius: '8px',
-      opacity: '0.8'
+      opacity: '0.8',
     })
     document.body.appendChild(clone)
     
@@ -57,7 +57,7 @@ async function quickAdd(e: Event) {
       onComplete: () => {
         document.body.removeChild(clone)
         gsap.fromTo(cartIcon, { scale: 1 }, { scale: 1.3, duration: 0.15, yoyo: true, repeat: 1 })
-      }
+      },
     })
   }
 
@@ -99,26 +99,29 @@ function leaveCard(e: MouseEvent) {
       <img :src="product.image" :alt="product.title" />
       <div class="product-card__body">
         <div class="product-card__meta">
-          <span>{{ product.brand }}</span>
+          <span>{{ product.sellerName || product.brand }}</span>
           <span>{{ product.city }}</span>
         </div>
         <h3>{{ product.title }}</h3>
         <p>{{ product.subtitle }}</p>
-        <div class="tag-row" style="margin-bottom: 8px;">
-          <a-tag v-for="tag in product.tags.slice(0, 3)" :key="tag" color="blue">{{ tag }}</a-tag>
+        <div class="tag-row product-card__tags">
+          <span v-for="tag in product.tags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
         </div>
-        <div class="product-card__footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-          <div style="display: flex; flex-direction: column;">
-            <strong style="color: var(--price); font-size: 1.25rem;">￥{{ product.price }}</strong>
-            <span style="color: #8c8c8c; font-size: 0.8rem;">已售 {{ product.sales }}</span>
+        <div class="product-card__footer">
+          <div class="product-card__price">
+            <strong>￥{{ product.price }}</strong>
+            <span>
+              {{ product.condition || '闲置' }} · 卖家 {{ product.sellerRating || product.rating }} 分
+            </span>
           </div>
           <a-button
+            class="product-card__action"
             type="primary"
             :disabled="product.stock <= 0"
             :loading="adding"
             @click="quickAdd"
           >
-            {{ product.stock <= 0 ? '缺货' : '加购' }}
+            {{ product.stock <= 0 ? '已转出' : '加购' }}
           </a-button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   DashboardOutlined, ShoppingOutlined, OrderedListOutlined,
-  UserOutlined, TeamOutlined, RollbackOutlined, HomeOutlined,
+  UserOutlined, RollbackOutlined, HomeOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -14,7 +14,6 @@ const menuItems = [
   { key: '/admin/products', icon: ShoppingOutlined, label: '商品管理' },
   { key: '/admin/orders', icon: OrderedListOutlined, label: '订单管理' },
   { key: '/admin/users', icon: UserOutlined, label: '用户管理' },
-  { key: '/admin/group-buy', icon: TeamOutlined, label: '拼团管理' },
   { key: '/admin/refunds', icon: RollbackOutlined, label: '退款审核' },
 ]
 
@@ -26,9 +25,9 @@ const selectedKeys = ref([route.path])
     <a-layout-sider width="220" style="background: #fff; border-right: 1px solid #f0f0f0;">
       <div style="padding: 20px 16px; font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
         <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--primary); color: #fff; border-radius: 8px;">管</span>
-        商城后台
+        二手交易后台
       </div>
-      <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="({key}) => router.push(key)">
+      <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="({ key }: { key: string }) => router.push(key)">
         <a-menu-item v-for="m in menuItems" :key="m.key">
           <template #icon><component :is="m.icon" /></template>
           {{ m.label }}
@@ -36,7 +35,7 @@ const selectedKeys = ref([route.path])
       </a-menu>
       <div style="position: absolute; bottom: 16px; left: 16px;">
         <a-button type="link" @click="router.push('/')">
-          <template #icon><HomeOutlined /></template>返回商城
+          <template #icon><HomeOutlined /></template>返回市场
         </a-button>
       </div>
     </a-layout-sider>
