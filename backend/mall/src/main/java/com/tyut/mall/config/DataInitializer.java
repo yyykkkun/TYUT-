@@ -23,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final UserCouponRepository userCouponRepository;
+    private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -77,6 +78,28 @@ public class DataInitializer implements CommandLineRunner {
             assignCoupon(demo.getId(), 2L, "2026-06-18 00:00:00");
             assignCoupon(demo.getId(), 3L, "2026-06-30 00:00:00");
         }
+
+        User seller = userRepository.findByUsername("seller@mall.test")
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .username("seller@mall.test")
+                        .password(passwordEncoder.encode("123456"))
+                        .phone("13800009999")
+                        .nickname("校园卖家")
+                        .level("普通会员")
+                        .balance(BigDecimal.valueOf(128))
+                        .points(560)
+                        .giftCard(BigDecimal.ZERO)
+                        .growth(980)
+                        .status(1)
+                        .role("user")
+                        .build()));
+
+        productRepository.findAll().stream()
+                .filter(product -> product.getSellerId() == null)
+                .forEach(product -> {
+                    product.setSellerId(seller.getId());
+                    productRepository.save(product);
+                });
     }
 
     private void assignCoupon(Long userId, Long couponId, String expiresAt) {

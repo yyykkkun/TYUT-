@@ -6,9 +6,10 @@ import {
   fetchMessages,
   markAllMessagesRead,
   markMessageRead,
-  sendLocalChatMessage,
+  openConversationForProduct,
+  sendChatMessage,
 } from '@/api/messages'
-import type { ChatMessage, Conversation, Message } from '@/types/domain'
+import type { ChatMessage, Conversation, Message, Product } from '@/types/domain'
 
 export const useMessageStore = defineStore('messages', () => {
   const messages = ref<Message[]>([])
@@ -49,14 +50,30 @@ export const useMessageStore = defineStore('messages', () => {
   }
 
   async function loadConversations() {
-    conversations.value = await fetchConversations()
+    try {
+      conversations.value = await fetchConversations()
+    } catch {
+      conversations.value = []
+    }
   }
 
   async function loadChat(conversationId: string) {
     activeConversationId.value = conversationId
-    chatMessages.value = await fetchChatMessages(conversationId)
+    chatMessages.value = await fetchChatMessages(conversationId).catch(() => [])
     const conversation = conversations.value.find((item) => item.id === conversationId)
     if (conversation) conversation.unread = 0
+  }
+
+  async function openProductConversation(product: Product) {
+    const conversation = await openConversationForProduct(product)
+    const idx = conversations.value.findIndex((item) => item.id === conversation.id)
+    if (idx >= 0) {
+      conversations.value[idx] = conversation
+    } else {
+      conversations.value.unshift(conversation)
+    }
+    activeConversationId.value = conversation.id
+    return conversation
   }
 
   function connectChat() {
@@ -68,15 +85,22 @@ export const useMessageStore = defineStore('messages', () => {
       socket = new WebSocket(`${protocol}//${window.location.host}/ws/chat?token=${encodeURIComponent(token)}`)
       socket.onopen = () => {
         socketConnected.value = true
+        socketError.value = ''
       }
       socket.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as ChatMessage
-        if (payload.conversationId === activeConversationId.value) {
-          chatMessages.value.push(payload)
+        const payload = JSON.parse(event.data) as ChatMessage & { type?: string; message?: string }
+        if (payload.type === 'error') {
+          socketError.value = payload.message || '实时消息发送失败'
+          return
         }
+        if (payload.conversationId === activeConversationId.value) {
+          const exists = chatMessages.value.some((item) => item.id === payload.id)
+          if (!exists) chatMessages.value.push(payload)
+        }
+        loadConversations()
       }
       socket.onerror = () => {
-        socketError.value = '实时连接不可用，已使用本地消息演示'
+        socketError.value = '实时连接不可用，将使用普通发送'
       }
       socket.onclose = () => {
         socketConnected.value = false
@@ -97,17 +121,18 @@ export const useMessageStore = defineStore('messages', () => {
   async function sendChat(content: string) {
     const text = content.trim()
     if (!text || !activeConversationId.value) return
-    const payload = {
-      conversationId: activeConversationId.value,
-      content: text,
-    }
     if (socket?.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(payload))
+      socket.send(JSON.stringify({
+        conversationId: activeConversationId.value,
+        content: text,
+      }))
+      return
     }
-    const localMessage = await sendLocalChatMessage(activeConversationId.value, text)
-    chatMessages.value.push(localMessage)
+
+    const message = await sendChatMessage(activeConversationId.value, text)
+    chatMessages.value.push(message)
     await loadConversations()
-    activeConversationId.value = localMessage.conversationId
+    activeConversationId.value = message.conversationId
   }
 
   return {
@@ -125,6 +150,7 @@ export const useMessageStore = defineStore('messages', () => {
     markAllRead,
     loadConversations,
     loadChat,
+    openProductConversation,
     connectChat,
     disconnectChat,
     sendChat,

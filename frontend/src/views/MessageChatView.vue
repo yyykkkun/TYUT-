@@ -90,7 +90,7 @@ async function scrollToBottom() {
           <p class="eyebrow">与 {{ messageStore.activeConversation.sellerName }} 沟通</p>
           <h1>{{ messageStore.activeConversation.productTitle }}</h1>
           <p>
-            {{ messageStore.socketConnected ? '实时连接中' : '本地演示模式' }}
+            {{ messageStore.socketConnected ? '实时连接中' : '普通发送模式' }}
           </p>
         </div>
         <RouterLink :to="`/products/${messageStore.activeConversation.productId}`">

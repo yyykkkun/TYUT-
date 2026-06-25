@@ -1,5 +1,5 @@
-import { get, put } from '@/api/request'
-import type { ChatMessage, Conversation, Message } from '@/types/domain'
+import { get, post, put } from '@/api/request'
+import type { ChatMessage, Conversation, Message, Product } from '@/types/domain'
 import { chatMessages as mockChatMessages, conversations as mockConversations, messages as mockMessages } from '@/data/mock'
 import { isMockSession } from '@/api/request'
 
@@ -150,14 +150,73 @@ function saveChatMessages(items: ChatMessage[]) {
 }
 
 export async function fetchConversations(): Promise<Conversation[]> {
-  return loadConversations()
+  if (useMock) return loadConversations()
+  try {
+    return await get<Conversation[]>('/messages/conversations')
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
+    useMock = true
+    console.warn('后端不可用，降级为本地会话数据')
+    return loadConversations()
+  }
+}
+
+export async function openConversationForProduct(product: Product): Promise<Conversation> {
+  if (useMock) return openLocalConversationForProduct(product)
+  try {
+    return await post<Conversation>('/messages/conversations', { productId: product.id })
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
+    useMock = true
+    console.warn('后端不可用，降级为本地会话数据')
+    return openLocalConversationForProduct(product)
+  }
 }
 
 export async function fetchChatMessages(conversationId: string): Promise<ChatMessage[]> {
-  return loadChatMessages().filter((item) => item.conversationId === conversationId)
+  if (useMock) return loadChatMessages().filter((item) => item.conversationId === conversationId)
+  try {
+    return await get<ChatMessage[]>(`/messages/conversations/${conversationId}/messages`)
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
+    useMock = true
+    return loadChatMessages().filter((item) => item.conversationId === conversationId)
+  }
 }
 
-export async function sendLocalChatMessage(conversationId: string, content: string): Promise<ChatMessage> {
+export async function sendChatMessage(conversationId: string, content: string): Promise<ChatMessage> {
+  if (useMock) return sendLocalChatMessage(conversationId, content)
+  try {
+    return await post<ChatMessage>(`/messages/conversations/${conversationId}/messages`, { content })
+  } catch (e) {
+    if (shouldSkipMock(e)) throw e
+    useMock = true
+    return sendLocalChatMessage(conversationId, content)
+  }
+}
+
+function openLocalConversationForProduct(product: Product): Conversation {
+  const conversations = loadConversations()
+  const existing = conversations.find((item) => item.productId === product.id)
+  if (existing) return existing
+
+  const createdAt = new Date().toISOString().replace('T', ' ').slice(0, 16)
+  const conversation: Conversation = {
+    id: `c${Date.now()}`,
+    productId: product.id,
+    productTitle: product.title,
+    productImage: product.image,
+    buyerName: '我',
+    sellerName: product.sellerName || product.brand || '卖家',
+    lastMessage: '我想了解一下这件闲置。',
+    updatedAt: createdAt,
+    unread: 0,
+  }
+  saveConversations([conversation, ...conversations])
+  return conversation
+}
+
+function sendLocalChatMessage(conversationId: string, content: string): Promise<ChatMessage> {
   const createdAt = new Date().toISOString().replace('T', ' ').slice(0, 16)
   const message: ChatMessage = {
     id: `cm${Date.now()}`,
@@ -175,7 +234,7 @@ export async function sendLocalChatMessage(conversationId: string, content: stri
   const idx = conversations.findIndex((item) => item.id === conversationId)
   if (idx >= 0) {
     const current = conversations[idx]
-    if (!current) return message
+    if (!current) return Promise.resolve(message)
     conversations[idx] = {
       ...current,
       lastMessage: content,
@@ -185,5 +244,5 @@ export async function sendLocalChatMessage(conversationId: string, content: stri
     saveConversations(conversations)
   }
 
-  return message
+  return Promise.resolve(message)
 }

@@ -9,17 +9,20 @@ import {
   ShareAltOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons-vue'
+import EmptyState from '@/components/EmptyState.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
+import { useMessageStore } from '@/stores/messages'
 import { useProductStore } from '@/stores/products'
 import { fetchProductReviews, type ProductReview } from '@/api/products'
 import { get, post, del } from '@/api/request'
-import type { Conversation, Product } from '@/types/domain'
+import type { Product } from '@/types/domain'
 
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
 const cart = useCartStore()
+const messageStore = useMessageStore()
 const quantity = ref(1)
 const selectedSpec = ref('')
 const detailProduct = ref<Product | undefined>(undefined)
@@ -139,23 +142,7 @@ async function startChat() {
   if (!product.value || startingChat.value) return
   startingChat.value = true
   try {
-    const raw = localStorage.getItem('mall-mock-conversations')
-    const list: Conversation[] = raw ? JSON.parse(raw) : []
-    let conversation = list.find((item) => item.productId === product.value?.id)
-    if (!conversation) {
-      conversation = {
-        id: `c${Date.now()}`,
-        productId: product.value.id,
-        productTitle: product.value.title,
-        productImage: product.value.image,
-        buyerName: '我',
-        sellerName: product.value.sellerName || product.value.brand || '卖家',
-        lastMessage: '我想了解一下这件闲置。',
-        updatedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
-        unread: 0,
-      }
-      localStorage.setItem('mall-mock-conversations', JSON.stringify([conversation, ...list]))
-    }
+    const conversation = await messageStore.openProductConversation(product.value)
     router.push(`/messages/${conversation.id}`)
   } finally {
     startingChat.value = false
@@ -175,101 +162,107 @@ function shareProduct() {
 </script>
 
 <template>
-  <main v-if="product" class="detail-page">
-    <section class="detail-media">
-      <img :src="product.image" :alt="product.title" />
-    </section>
-    <section class="detail-info">
-      <p class="eyebrow">{{ product.sellerName || product.brand }} · {{ product.city }}</p>
-      <h1>{{ product.title }}</h1>
-      <p>{{ product.subtitle }}</p>
-      <div class="price-line">
-        <strong>￥{{ skus.length ? currentSkuPrice.toFixed(2) : product.price }}</strong>
-        <span v-if="product.originalPrice">￥{{ product.originalPrice }}</span>
-      </div>
-      <div class="facts">
-        <span>{{ product.stock > 0 ? '可交易' : '已转出' }}</span>
-        <span>{{ product.condition || '成色待沟通' }}</span>
-        <span>卖家评分 {{ product.sellerRating || product.rating }}</span>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field__label">规格</div>
-        <a-radio-group v-model:value="selectedSpec" option-type="button" button-style="solid" size="large" @change="(e: any) => onSpecChange(e.target.value)">
-          <a-radio-button v-for="spec in product.specs" :key="spec" :value="spec">
-            {{ spec }}
-          </a-radio-button>
-        </a-radio-group>
-      </div>
-      <div class="detail-field">
-        <div class="detail-field__label">数量</div>
-        <a-input-number v-model:value="quantity" :min="1" :max="Math.max(product.stock, 1)" size="large" />
-      </div>
-      <div class="action-row detail-actions">
-        <a-button size="large" :disabled="product.stock <= 0" @click="addToCart(false)">
-          <template #icon><ShoppingCartOutlined /></template>
-          加入购物车
-        </a-button>
-        <a-button type="primary" size="large" :disabled="product.stock <= 0" @click="addToCart(true)">
-          立即购买
-        </a-button>
-        <a-button size="large" :loading="startingChat" @click="startChat">
-          <template #icon><MessageOutlined /></template>
-          联系卖家
-        </a-button>
-        <a-button size="large" @click="shareProduct">
-          <template #icon><ShareAltOutlined /></template>
-          分享
-        </a-button>
-        <a-button class="favorite-button" size="large" :loading="favLoading" @click="toggleFavorite" :aria-label="favorited ? '取消收藏' : '收藏'">
-          <template #icon>
-            <HeartFilled v-if="favorited" />
-            <HeartOutlined v-else />
-          </template>
-        </a-button>
-      </div>
-    </section>
-  </main>
-
-  <!-- 商品评价 -->
-  <section class="page-section">
-    <div class="section-heading">
-      <h2>交易评价 ({{ reviews.length }})</h2>
-    </div>
-
-    <a-spin v-if="reviewsLoading" class="center-spin" />
-
-    <a-collapse v-else-if="reviews.length" class="review-list" :bordered="false">
-      <a-collapse-panel v-for="r in reviews" :key="r.id">
-        <template #header>
-          <div class="review-head">
-            <a-avatar :src="r.userAvatar" :size="36">
-              {{ r.userName.charAt(0) }}
-            </a-avatar>
-            <div>
-              <strong>{{ r.userName }}</strong>
-              <span>{{ r.createdAt?.slice(0, 10) }}</span>
-            </div>
-            <span class="review-rating">{{ r.rating || 5 }}.0 分</span>
+  <div class="product-detail-view">
+    <template v-if="product">
+      <main class="detail-page">
+        <section class="detail-media">
+          <img :src="product.image" :alt="product.title" />
+        </section>
+        <section class="detail-info">
+          <p class="eyebrow">{{ product.sellerName || product.brand }} · {{ product.city }}</p>
+          <h1>{{ product.title }}</h1>
+          <p>{{ product.subtitle }}</p>
+          <div class="price-line">
+            <strong>￥{{ skus.length ? currentSkuPrice.toFixed(2) : product.price }}</strong>
+            <span v-if="product.originalPrice">￥{{ product.originalPrice }}</span>
           </div>
-        </template>
-        <p class="review-content">{{ r.content }}</p>
-        <div v-if="r.images.length" class="review-images">
-          <img v-for="(img, i) in r.images" :key="i" :src="img" :alt="`评价图片 ${i + 1}`" />
+          <div class="facts">
+            <span>{{ product.stock > 0 ? '可交易' : '已转出' }}</span>
+            <span>{{ product.condition || '成色待沟通' }}</span>
+            <span>卖家评分 {{ product.sellerRating || product.rating }}</span>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">规格</div>
+            <a-radio-group v-model:value="selectedSpec" option-type="button" button-style="solid" size="large" @change="(e: any) => onSpecChange(e.target.value)">
+              <a-radio-button v-for="spec in product.specs" :key="spec" :value="spec">
+                {{ spec }}
+              </a-radio-button>
+            </a-radio-group>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">数量</div>
+            <a-input-number v-model:value="quantity" :min="1" :max="Math.max(product.stock, 1)" size="large" />
+          </div>
+          <div class="action-row detail-actions">
+            <a-button size="large" :disabled="product.stock <= 0" @click="addToCart(false)">
+              <template #icon><ShoppingCartOutlined /></template>
+              加入购物车
+            </a-button>
+            <a-button type="primary" size="large" :disabled="product.stock <= 0" @click="addToCart(true)">
+              立即购买
+            </a-button>
+            <a-button size="large" :loading="startingChat" @click="startChat">
+              <template #icon><MessageOutlined /></template>
+              联系卖家
+            </a-button>
+            <a-button size="large" @click="shareProduct">
+              <template #icon><ShareAltOutlined /></template>
+              分享
+            </a-button>
+            <a-button class="favorite-button" size="large" :loading="favLoading" @click="toggleFavorite" :aria-label="favorited ? '取消收藏' : '收藏'">
+              <template #icon>
+                <HeartFilled v-if="favorited" />
+                <HeartOutlined v-else />
+              </template>
+            </a-button>
+          </div>
+        </section>
+      </main>
+
+      <!-- 商品评价 -->
+      <section class="page-section">
+        <div class="section-heading">
+          <h2>交易评价 ({{ reviews.length }})</h2>
         </div>
-      </a-collapse-panel>
-    </a-collapse>
 
-    <div v-else class="muted-empty">
-      暂无评价，完成交易后可以评价卖家
-    </div>
-  </section>
+        <a-spin v-if="reviewsLoading" class="center-spin" />
 
-  <section class="page-section">
-    <div class="section-heading">
-      <h2>看过这件闲置的人还看了</h2>
-    </div>
-    <div class="product-grid">
-      <ProductCard v-for="item in related" :key="item.id" :product="item" />
-    </div>
-  </section>
+        <a-collapse v-else-if="reviews.length" class="review-list" :bordered="false">
+          <a-collapse-panel v-for="r in reviews" :key="r.id">
+            <template #header>
+              <div class="review-head">
+                <a-avatar :src="r.userAvatar" :size="36">
+                  {{ r.userName.charAt(0) }}
+                </a-avatar>
+                <div>
+                  <strong>{{ r.userName }}</strong>
+                  <span>{{ r.createdAt?.slice(0, 10) }}</span>
+                </div>
+                <span class="review-rating">{{ r.rating || 5 }}.0 分</span>
+              </div>
+            </template>
+            <p class="review-content">{{ r.content }}</p>
+            <div v-if="r.images.length" class="review-images">
+              <img v-for="(img, i) in r.images" :key="i" :src="img" :alt="`评价图片 ${i + 1}`" />
+            </div>
+          </a-collapse-panel>
+        </a-collapse>
+
+        <div v-else class="muted-empty">
+          暂无评价，完成交易后可以评价卖家
+        </div>
+      </section>
+
+      <section class="page-section">
+        <div class="section-heading">
+          <h2>看过这件闲置的人还看了</h2>
+        </div>
+        <div class="product-grid">
+          <ProductCard v-for="item in related" :key="item.id" :product="item" />
+        </div>
+      </section>
+    </template>
+
+    <EmptyState v-else title="商品不存在或已下架" action-text="返回首页" action-to="/" />
+  </div>
 </template>

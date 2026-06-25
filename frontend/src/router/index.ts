@@ -50,15 +50,14 @@ const router = createRouter({
 })
 
 // 路由守卫：管理员权限检查
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to) => {
   if (to.meta.requiresAdmin) {
     const role = localStorage.getItem('mall-user-role') || ''
     if (role !== 'admin') {
-      next('/login')
-      return
+      return '/login'
     }
   }
-  next()
+  return true
 })
 
 export default router

@@ -861,18 +861,39 @@ h3 {
 }
 
 .detail-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) repeat(3, auto);
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-top: 26px;
 }
 
 .detail-actions .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 48px;
+  white-space: nowrap;
+}
+
+.detail-actions .ant-btn:nth-child(1),
+.detail-actions .ant-btn:nth-child(2) {
+  flex: 1 1 136px;
+  min-width: 136px;
+}
+
+.detail-actions .ant-btn:nth-child(3) {
+  flex: 0 1 118px;
+  min-width: 118px;
+}
+
+.detail-actions .ant-btn:nth-child(4) {
+  flex: 0 1 88px;
+  min-width: 88px;
 }
 
 .favorite-button {
+  flex: 0 0 48px;
   width: 48px;
   padding: 0;
   color: var(--price);
@@ -1602,10 +1623,15 @@ input.invalid {
   }
 
   .detail-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .detail-actions .ant-btn {
+    flex: 1 1 calc(50% - 6px);
   }
 
   .detail-actions .favorite-button {
+    flex-basis: calc(50% - 6px);
     width: 100%;
   }
 
@@ -1723,7 +1749,13 @@ input.invalid {
   }
 
   .detail-actions {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .detail-actions .ant-btn,
+  .detail-actions .favorite-button {
+    flex-basis: 100%;
+    width: 100%;
   }
 
   .review-head {
