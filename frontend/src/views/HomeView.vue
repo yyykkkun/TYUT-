@@ -112,6 +112,11 @@ function search() {
   <div ref="pageRef" class="home-page">
     <section class="hero">
       <div class="hero__content">
+        <p class="eyebrow">校园闲置 · 快速交易 · 同校可信</p>
+        <h1>把不用的好物，交给刚好需要的人</h1>
+        <p class="hero__lead">
+          搜索教材、数码、宿舍用品和代步工具，优先发现同校同城商品，沟通更直接，交易更安心。
+        </p>
         <a-input-search
           v-model:value="keyword"
           class="hero-search"

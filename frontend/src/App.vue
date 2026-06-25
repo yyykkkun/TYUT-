@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { MenuOutlined, MessageOutlined, ShoppingCartOutlined, UserOutlined } from '@ant-design/icons-vue'
+import {
+  MenuOutlined,
+  MessageOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/messages'
@@ -47,7 +52,35 @@ onMounted(async () => {
 </script>
 
 <template>
-  <a-config-provider :theme="{ token: { colorPrimary: '#0f9f86', borderRadius: 8 } }">
+  <a-config-provider
+    :theme="{
+      token: {
+        colorPrimary: '#7C3AED',
+        colorSuccess: '#22C55E',
+        colorInfo: '#7C3AED',
+        colorWarning: '#F59E0B',
+        colorError: '#EF4444',
+        colorText: '#1F1638',
+        colorTextSecondary: '#5E5377',
+        colorBorder: '#DED6F2',
+        colorBgContainer: 'rgba(255,255,255,0.82)',
+        borderRadius: 14,
+        controlHeight: 42,
+        boxShadow: '0 18px 45px rgba(76, 29, 149, 0.10)',
+      },
+      components: {
+        Button: {
+          primaryShadow: '0 12px 28px rgba(124, 58, 237, 0.24)',
+          defaultShadow: '0 8px 20px rgba(76, 29, 149, 0.08)',
+        },
+        Menu: {
+          itemBorderRadius: 12,
+          itemSelectedBg: '#F1E9FF',
+          itemSelectedColor: '#6D28D9',
+        },
+      },
+    }"
+  >
     <header class="app-header">
       <div class="header-left">
         <RouterLink class="brand" to="/" @click="mobileNavOpen = false">
@@ -76,11 +109,19 @@ onMounted(async () => {
             <ShoppingCartOutlined />
           </a-badge>
         </RouterLink>
-        <a-button class="account-button" type="primary" @click="$router.push(auth.isLoggedIn ? '/member' : '/login')">
+        <a-button
+          class="account-button"
+          type="primary"
+          @click="$router.push(auth.isLoggedIn ? '/member' : '/login')"
+        >
           <template #icon><UserOutlined /></template>
           {{ accountLabel }}
         </a-button>
-        <a-button class="mobile-menu-button" :aria-expanded="mobileNavOpen" @click="mobileNavOpen = !mobileNavOpen">
+        <a-button
+          class="mobile-menu-button"
+          :aria-expanded="mobileNavOpen"
+          @click="mobileNavOpen = !mobileNavOpen"
+        >
           <template #icon><MenuOutlined /></template>
         </a-button>
       </div>
@@ -103,6 +144,5 @@ onMounted(async () => {
         <component :is="Component" :key="route.fullPath" />
       </Transition>
     </RouterView>
-
   </a-config-provider>
 </template>

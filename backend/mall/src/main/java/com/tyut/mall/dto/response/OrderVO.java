@@ -30,4 +30,6 @@ public class OrderVO {
     private String review;
     private Integer rating;
     private String paymentMethod;
+    private String refundStatus;
+    private String refundReason;
 }

@@ -70,14 +70,19 @@ function stopCountdown() {
 onUnmounted(stopCountdown)
 
 const payMethods = [
-  { key: 'wechat' as const, label: '微信支付', icon: '💚', desc: '微信安全支付' },
-  { key: 'alipay' as const, label: '支付宝', icon: '💙', desc: '支付宝安全支付' },
-  { key: 'card' as const, label: '银行卡', icon: '💳', desc: '支持主流银行借记卡/信用卡' },
-  { key: 'balance' as const, label: '余额支付', icon: '💰', desc: '使用账户余额直接支付' },
+  { key: 'wechat' as const, label: '微信支付', icon: '微', desc: '微信安全支付' },
+  { key: 'alipay' as const, label: '支付宝', icon: '支', desc: '支付宝安全支付' },
+  { key: 'card' as const, label: '银行卡', icon: '卡', desc: '支持主流银行借记卡/信用卡' },
+  { key: 'balance' as const, label: '余额支付', icon: '余', desc: '使用账户余额直接支付' },
 ]
 
 function paymentLabel(method?: string) {
-  const map: Record<string, string> = { wechat: '微信支付', alipay: '支付宝', card: '银行卡', balance: '余额支付' }
+  const map: Record<string, string> = {
+    wechat: '微信支付',
+    alipay: '支付宝',
+    card: '银行卡',
+    balance: '余额支付',
+  }
   return method ? map[method] || method : '—'
 }
 
@@ -94,7 +99,10 @@ async function loadOrder() {
       // 已过期未支付订单自动取消
       if (result.status === 'pending_payment') {
         const created = new Date(result.createdAt.replace(' ', 'T'))
-        if (!isNaN(created.getTime()) && Date.now() - created.getTime() > PAY_TIMEOUT_MIN * 60 * 1000) {
+        if (
+          !isNaN(created.getTime()) &&
+          Date.now() - created.getTime() > PAY_TIMEOUT_MIN * 60 * 1000
+        ) {
           result.status = 'cancelled'
           await orders.cancel(id).catch(() => {})
         }
@@ -124,10 +132,13 @@ onMounted(() => {
   }, 10000)
 })
 
-watch(() => route.params.id, () => {
-  loadOrder()
-  if (autoRefreshTimer) clearInterval(autoRefreshTimer)
-})
+watch(
+  () => route.params.id,
+  () => {
+    loadOrder()
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer)
+  },
+)
 
 onUnmounted(() => {
   stopCountdown()
@@ -292,28 +303,77 @@ async function doReview() {
           <h2>评价晒单</h2>
           <blockquote v-if="order.review">{{ order.review }}</blockquote>
           <div v-else>
-            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-              <span style="font-weight:700;">评分：</span>
+            <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px">
+              <span style="font-weight: 700">评分：</span>
               <a-rate v-model:value="rating" :count="5" />
             </div>
-            <textarea v-model="review" rows="4" placeholder="分享你的购物体验..." style="width:100%; margin-bottom:12px;"></textarea>
+            <textarea
+              v-model="review"
+              rows="4"
+              placeholder="分享你的购物体验..."
+              style="width: 100%; margin-bottom: 12px"
+            ></textarea>
             <!-- 已选图片预览 -->
-            <div v-if="reviewImages.length" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-              <div v-for="(url, idx) in reviewImages" :key="idx" style="position:relative; width:80px; height:80px;">
-                <img :src="url" style="width:80px; height:80px; object-fit:cover; border-radius:6px;" />
+            <div
+              v-if="reviewImages.length"
+              style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px"
+            >
+              <div
+                v-for="(url, idx) in reviewImages"
+                :key="idx"
+                style="position: relative; width: 80px; height: 80px"
+              >
+                <img
+                  :src="url"
+                  style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px"
+                />
                 <button
                   @click="removeImage(idx)"
-                  style="position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; border:none; background:var(--danger); color:#fff; font-size:12px; cursor:pointer; line-height:20px;"
-                >×</button>
+                  style="
+                    position: absolute;
+                    top: -6px;
+                    right: -6px;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    border: none;
+                    background: var(--danger);
+                    color: #fff;
+                    font-size: 12px;
+                    cursor: pointer;
+                    line-height: 20px;
+                  "
+                >
+                  ×
+                </button>
               </div>
             </div>
             <!-- 上传按钮 -->
-            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--primary); font-weight:700; margin-bottom:12px;">
+            <label
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                color: var(--primary);
+                font-weight: 700;
+                margin-bottom: 12px;
+              "
+            >
               📷 {{ uploading ? '上传中...' : '添加图片' }}
-              <input type="file" multiple accept="image/*" style="display:none;" @change="handleUpload" :disabled="uploading" />
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                style="display: none"
+                @change="handleUpload"
+                :disabled="uploading"
+              />
             </label>
-            <br/>
-            <button class="btn primary" type="button" @click="doReview" :disabled="uploading">提交评价</button>
+            <br />
+            <button class="btn primary" type="button" @click="doReview" :disabled="uploading">
+              提交评价
+            </button>
           </div>
         </section>
       </div>
@@ -339,13 +399,19 @@ async function doReview() {
         <p class="total">
           <span>实付</span><strong>￥{{ order.total }}</strong>
         </p>
-        <p v-if="order.paymentMethod" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0;">
+        <p
+          v-if="order.paymentMethod"
+          style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0"
+        >
           <span>支付方式</span><strong>{{ paymentLabel(order.paymentMethod) }}</strong>
         </p>
 
         <!-- 倒计时 -->
-        <p v-if="order.status === 'pending_payment' && remainingSeconds > 0" style="text-align: center; color: var(--warning); font-weight: 700; margin-bottom: 8px;">
-          ⏱ 请在 {{ countdownText }} 内完成支付，超时自动取消
+        <p
+          v-if="order.status === 'pending_payment' && remainingSeconds > 0"
+          style="text-align: center; color: var(--warning); font-weight: 700; margin-bottom: 8px"
+        >
+          限时支付：请在 {{ countdownText }} 内完成支付，超时自动取消
         </p>
 
         <!-- 操作按钮 -->
@@ -372,17 +438,26 @@ async function doReview() {
         </button>
         <!-- 退款按钮 -->
         <button
-          v-if="(order.status === 'completed' || order.status === 'paid') && (!order.refundStatus || order.refundStatus === 'rejected')"
+          v-if="
+            (order.status === 'completed' || order.status === 'paid') &&
+            (!order.refundStatus || order.refundStatus === 'rejected')
+          "
           class="btn subtle block"
-          style="color: var(--danger);"
+          style="color: var(--danger)"
           @click="doRefund"
         >
           申请退款
         </button>
-        <p v-if="order.refundStatus === 'pending'" style="color: var(--warning); text-align: center; font-weight: 700;">
+        <p
+          v-if="order.refundStatus === 'pending'"
+          style="color: var(--warning); text-align: center; font-weight: 700"
+        >
           退款审核中
         </p>
-        <p v-if="order.refundStatus === 'completed'" style="color: var(--success); text-align: center; font-weight: 700;">
+        <p
+          v-if="order.refundStatus === 'completed'"
+          style="color: var(--success); text-align: center; font-weight: 700"
+        >
           已退款
         </p>
       </aside>
@@ -396,7 +471,19 @@ async function doReview() {
           应付金额 <strong>￥{{ order.total }}</strong>
         </p>
 
-        <p v-if="payError" style="color: var(--danger); background: var(--danger-soft); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem;">{{ payError }}</p>
+        <p
+          v-if="payError"
+          style="
+            color: var(--danger);
+            background: var(--danger-soft);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+          "
+        >
+          {{ payError }}
+        </p>
 
         <div class="pay-methods">
           <label
@@ -424,7 +511,7 @@ async function doReview() {
     </div>
   </main>
 
-  <div v-else-if="loading" style="padding: 40px; text-align: center;">
+  <div v-else-if="loading" style="padding: 40px; text-align: center">
     <a-spin size="large" />
   </div>
   <EmptyState v-else title="订单不存在" action-text="返回订单中心" action-to="/orders" />

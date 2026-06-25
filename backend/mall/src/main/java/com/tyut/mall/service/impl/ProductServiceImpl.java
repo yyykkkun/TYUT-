@@ -200,7 +200,19 @@ public class ProductServiceImpl implements ProductService {
                 .image(p.getImage())
                 .specs(p.getSpecs() != null ? JSON.parseArray(p.getSpecs(), String.class) : List.of())
                 .promotion(p.getPromotion())
+                .listingType(p.getPromotion())
+                .sellerName(p.getBrand())
+                .sellerRating(p.getRating())
+                .condition(resolveCondition(p))
                 .createdAt(p.getCreatedAt() != null ? p.getCreatedAt().toString() : null)
                 .build();
+    }
+
+    private String resolveCondition(Product p) {
+        List<String> tags = p.getTags() != null ? JSON.parseArray(p.getTags(), String.class) : List.of();
+        return tags.stream()
+                .filter(tag -> tag != null && (tag.contains("新") || tag.contains("成")))
+                .findFirst()
+                .orElse("闲置");
     }
 }

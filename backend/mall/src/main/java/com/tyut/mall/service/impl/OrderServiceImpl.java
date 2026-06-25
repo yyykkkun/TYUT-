@@ -574,6 +574,8 @@ public class OrderServiceImpl implements OrderService {
                 .review(order.getReview())
                 .rating(order.getRating())
                 .paymentMethod(order.getPaymentMethod())
+                .refundStatus(order.getRefundStatus())
+                .refundReason(order.getRefundReason())
                 .build();
     }
 

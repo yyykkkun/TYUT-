@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import {
   ArrowLeftOutlined,
   CheckOutlined,
-  NotificationOutlined,
 } from '@ant-design/icons-vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useMessageStore } from '@/stores/messages'
@@ -27,10 +26,6 @@ onMounted(async () => {
 <template>
   <main class="notifications-page">
     <section class="notifications-hero">
-      <div>
-        <p class="eyebrow">通知</p>
-        <h1><NotificationOutlined /> 消息通知</h1>
-      </div>
       <div class="notification-actions">
         <RouterLink to="/messages">
           <a-button>
@@ -101,21 +96,9 @@ onMounted(async () => {
 
 .notifications-hero {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-  padding: 22px;
-}
-
-.notifications-hero h1 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 6px;
-}
-
-.notifications-hero p:last-child {
-  margin: 0;
-  color: var(--ink-muted);
+  padding: 14px;
 }
 
 .notification-actions {

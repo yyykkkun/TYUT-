@@ -31,4 +31,8 @@ public class ProductVO {
     private List<String> specs;
     private String createdAt;
     private String promotion;
+    private String listingType;
+    private String sellerName;
+    private BigDecimal sellerRating;
+    private String condition;
 }
