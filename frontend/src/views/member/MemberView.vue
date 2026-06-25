@@ -220,6 +220,18 @@ onMounted(async () => {
     <a-card :bordered="false" title="我的服务" class="member-services-card">
       <a-row :gutter="[16, 16]">
         <a-col :xs="8" :sm="6" :md="4">
+          <RouterLink to="/products/new" class="quick-link">
+            <PlusOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary)" />
+            <span>发布闲置</span>
+          </RouterLink>
+        </a-col>
+        <a-col :xs="8" :sm="6" :md="4">
+          <RouterLink to="/member/listings" class="quick-link">
+            <ShoppingOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary)" />
+            <span>我的发布</span>
+          </RouterLink>
+        </a-col>
+        <a-col :xs="8" :sm="6" :md="4">
           <RouterLink to="/orders" class="quick-link">
             <ShoppingOutlined style="font-size: 28px; margin-bottom: 12px; color: var(--primary)" />
             <span>订单记录</span>

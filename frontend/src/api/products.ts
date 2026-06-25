@@ -1,4 +1,4 @@
-import { get, isMockSession } from '@/api/request'
+import { get, post, isMockSession } from '@/api/request'
 import type { Product, Category } from '@/types/domain'
 import { products as mockProducts, categories as mockCategories } from '@/data/mock'
 
@@ -90,6 +90,28 @@ export interface ProductReview {
   content: string
   images: string[]
   createdAt?: string
+}
+
+export interface PublishProductParams {
+  title: string
+  subtitle?: string
+  categoryId: number
+  price: number
+  stock: number
+  image: string
+  city?: string
+  condition?: string
+  listingType?: 'idle' | 'urgent' | 'campus'
+  specs: string[]
+  tags: string[]
+}
+
+export async function publishProduct(data: PublishProductParams): Promise<Product> {
+  return await post<Product>('/products', data)
+}
+
+export async function fetchMyProducts(): Promise<Product[]> {
+  return await get<Product[]>('/products/my')
 }
 
 const mockReviews: Record<string, ProductReview[]> = {

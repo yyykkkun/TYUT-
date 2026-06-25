@@ -5,11 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -53,7 +53,7 @@ public class FileController {
     private String saveFile(MultipartFile file) throws IOException {
         // 按日期分目录
         String dateDir = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        Path dir = Paths.get(uploadDir, dateDir);
+        Path dir = Paths.get(uploadDir, dateDir).toAbsolutePath().normalize();
         Files.createDirectories(dir);
 
         // 生成唯一文件名
@@ -65,7 +65,7 @@ public class FileController {
         String newName = UUID.randomUUID().toString().replace("-", "") + ext;
         Path target = dir.resolve(newName);
 
-        file.transferTo(target.toFile());
+        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         return "/" + uploadDir + "/" + dateDir + "/" + newName;
     }
 }

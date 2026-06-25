@@ -12,6 +12,7 @@ export interface Product {
   title: string
   subtitle: string
   category: string
+  sellerId?: string
   brand: string
   sellerName?: string
   sellerRating?: number

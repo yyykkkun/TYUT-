@@ -27,6 +27,9 @@ public class Product {
     @Column(name = "category_id")
     private Long categoryId;
 
+    @Column(name = "seller_id")
+    private Long sellerId;
+
     @Column(length = 64)
     private String brand;
 
@@ -63,6 +66,12 @@ public class Product {
 
     @Column(length = 500)
     private String specs;  // JSON 数组字符串
+
+    @Column(length = 32)
+    private String listingType;  // idle / urgent / campus
+
+    @Column(name = "condition_desc", length = 64)
+    private String condition;    // 全新 / 九成新 / 有使用痕迹等
 
     @Column(length = 32)
     private String promotion;

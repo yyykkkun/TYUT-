@@ -14,8 +14,8 @@ let introCtx: gsap.Context | undefined
 let gridCtx: gsap.Context | undefined
 
 onMounted(async () => {
-  productStore.loadCategories()
-  productStore.patchFilters({
+  await productStore.loadCategories()
+  await productStore.patchFilters({
     keyword: String(route.query.keyword || ''),
     category: String(route.query.category || ''),
     sort: (route.query.sort as ProductSort) || 'composite',
@@ -181,7 +181,9 @@ function runGridMotion() {
         </a-select>
       </div>
 
-      <div v-if="productStore.pagedProducts.length" class="product-grid">
+      <a-spin v-if="productStore.loading" class="center-spin" size="large" />
+
+      <div v-else-if="productStore.pagedProducts.length" class="product-grid">
         <ProductCard
           v-for="product in productStore.pagedProducts"
           :key="product.id"

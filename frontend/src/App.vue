@@ -20,6 +20,7 @@ const accountLabel = computed(() => (auth.isLoggedIn ? auth.user.name : '登录'
 const messageBadgeCount = computed(() => messages.unreadCount + messages.chatUnreadCount)
 const navItems = computed(() => [
   { to: '/products', label: '闲置市场', show: true },
+  { to: '/products/new', label: '发布闲置', show: auth.isLoggedIn },
   { to: '/messages', label: '沟通', show: true },
   { to: '/orders', label: '订单', show: true },
   { to: '/member', label: '个人中心', show: true },
@@ -141,7 +142,7 @@ onMounted(async () => {
 
     <RouterView v-slot="{ Component, route }">
       <Transition name="route-fade" mode="out-in">
-        <component :is="Component" :key="route.fullPath" />
+        <component :is="Component" :key="route.path" />
       </Transition>
     </RouterView>
   </a-config-provider>

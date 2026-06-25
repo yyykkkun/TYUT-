@@ -17,6 +17,7 @@ public class ProductVO {
     private String title;
     private String subtitle;
     private String category;
+    private String sellerId;
     private String brand;
     private String origin;
     private String city;

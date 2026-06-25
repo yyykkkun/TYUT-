@@ -30,9 +30,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/auth/register",
             "/api/auth/login/anonymous",
-            "/api/products",
-            "/api/products/",
-            "/api/categories"
+            "/api/categories",
+            "/uploads/"
     );
 
     @Override
@@ -47,6 +46,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
                 return;
             }
+        }
+        // 商品浏览接口公开，商品发布/编辑等写操作必须登录
+        if ("GET".equalsIgnoreCase(request.getMethod())
+                && path.startsWith("/api/products")
+                && !path.startsWith("/api/products/my")) {
+            chain.doFilter(request, response);
+            return;
         }
 
         // OPTIONS 请求放行

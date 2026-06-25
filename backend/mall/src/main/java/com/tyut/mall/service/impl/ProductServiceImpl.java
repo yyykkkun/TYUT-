@@ -1,12 +1,16 @@
 package com.tyut.mall.service.impl;
 
 import com.alibaba.fastjson2.JSON;
+import com.tyut.mall.common.ApiException;
+import com.tyut.mall.dto.request.PublishProductRequest;
 import com.tyut.mall.dto.response.ProductPageVO;
 import com.tyut.mall.dto.response.ProductVO;
 import com.tyut.mall.entity.BrowseHistory;
 import com.tyut.mall.entity.Product;
+import com.tyut.mall.entity.User;
 import com.tyut.mall.repository.BrowseHistoryRepository;
 import com.tyut.mall.repository.ProductRepository;
+import com.tyut.mall.repository.UserRepository;
 import com.tyut.mall.service.ProductService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final BrowseHistoryRepository browseHistoryRepository;
+    private final UserRepository userRepository;
 
     @Override
     public ProductPageVO list(String keyword, String categoryCode, String brand, String stock,
@@ -181,12 +186,59 @@ public class ProductServiceImpl implements ProductService {
         return result.stream().distinct().limit(8).collect(Collectors.toList());
     }
 
+    @Override
+    public List<ProductVO> mine(Long userId) {
+        return productRepository.findBySellerIdOrderByCreatedAtDesc(userId)
+                .stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public ProductVO publish(Long userId, PublishProductRequest request) {
+        User seller = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("用户不存在"));
+        if (seller.getStatus() != null && seller.getStatus() == 0) {
+            throw ApiException.badRequest("账号已禁用，不能发布商品");
+        }
+
+        List<String> specs = request.getSpecs() == null || request.getSpecs().isEmpty()
+                ? List.of("默认")
+                : request.getSpecs().stream().filter(s -> s != null && !s.isBlank()).toList();
+        List<String> tags = request.getTags() == null ? new ArrayList<>() : new ArrayList<>(request.getTags());
+        if (request.getCondition() != null && !request.getCondition().isBlank() && !tags.contains(request.getCondition())) {
+            tags.add(request.getCondition());
+        }
+
+        Product product = Product.builder()
+                .sellerId(userId)
+                .title(request.getTitle())
+                .subtitle(request.getSubtitle())
+                .categoryId(request.getCategoryId())
+                .brand(seller.getNickname() != null ? seller.getNickname() : seller.getUsername())
+                .origin("个人闲置")
+                .city(request.getCity())
+                .tags(JSON.toJSONString(tags))
+                .price(request.getPrice())
+                .stock(request.getStock() != null ? request.getStock() : 1)
+                .sales(0)
+                .popularity(0)
+                .rating(BigDecimal.valueOf(5.0))
+                .image(request.getImage())
+                .specs(JSON.toJSONString(specs))
+                .listingType(normalizeListingType(request.getListingType()))
+                .condition(request.getCondition() != null && !request.getCondition().isBlank() ? request.getCondition() : "闲置")
+                .promotion(normalizeListingType(request.getListingType()))
+                .status(1)
+                .build();
+        return toVO(productRepository.save(product));
+    }
+
     private ProductVO toVO(Product p) {
         return ProductVO.builder()
                 .id(String.valueOf(p.getId()))
                 .title(p.getTitle())
                 .subtitle(p.getSubtitle())
                 .category(p.getCategoryId() != null ? String.valueOf(p.getCategoryId()) : null)
+                .sellerId(p.getSellerId() != null ? String.valueOf(p.getSellerId()) : null)
                 .brand(p.getBrand())
                 .origin(p.getOrigin())
                 .city(p.getCity())
@@ -200,8 +252,8 @@ public class ProductServiceImpl implements ProductService {
                 .image(p.getImage())
                 .specs(p.getSpecs() != null ? JSON.parseArray(p.getSpecs(), String.class) : List.of())
                 .promotion(p.getPromotion())
-                .listingType(p.getPromotion())
-                .sellerName(p.getBrand())
+                .listingType(p.getListingType() != null ? p.getListingType() : p.getPromotion())
+                .sellerName(resolveSellerName(p))
                 .sellerRating(p.getRating())
                 .condition(resolveCondition(p))
                 .createdAt(p.getCreatedAt() != null ? p.getCreatedAt().toString() : null)
@@ -209,10 +261,29 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private String resolveCondition(Product p) {
+        if (p.getCondition() != null && !p.getCondition().isBlank()) {
+            return p.getCondition();
+        }
         List<String> tags = p.getTags() != null ? JSON.parseArray(p.getTags(), String.class) : List.of();
         return tags.stream()
                 .filter(tag -> tag != null && (tag.contains("新") || tag.contains("成")))
                 .findFirst()
                 .orElse("闲置");
+    }
+
+    private String resolveSellerName(Product p) {
+        if (p.getSellerId() == null) {
+            return p.getBrand();
+        }
+        return userRepository.findById(p.getSellerId())
+                .map(user -> user.getNickname() != null ? user.getNickname() : user.getUsername())
+                .orElse(p.getBrand());
+    }
+
+    private String normalizeListingType(String listingType) {
+        if ("urgent".equals(listingType) || "campus".equals(listingType)) {
+            return listingType;
+        }
+        return "idle";
     }
 }

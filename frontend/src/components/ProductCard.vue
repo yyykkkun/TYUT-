@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { gsap } from 'gsap'
 import type { Product } from '@/types/domain'
 import { useCartStore } from '@/stores/cart'
@@ -11,6 +11,8 @@ const props = defineProps<{
 const cart = useCartStore()
 const adding = ref(false)
 const cardRef = ref<HTMLElement | null>(null)
+const safeTags = computed(() => Array.isArray(props.product.tags) ? props.product.tags : [])
+const safeSpecs = computed(() => Array.isArray(props.product.specs) ? props.product.specs : [])
 
 onUnmounted(() => {
   if (!cardRef.value) return
@@ -21,7 +23,7 @@ async function quickAdd(e: Event) {
   e.preventDefault()
   e.stopPropagation()
   const button = e.currentTarget as HTMLElement
-  const firstSpec = props.product.specs[0]
+  const firstSpec = safeSpecs.value[0]
   if (!firstSpec || props.product.stock <= 0) return
   
   // Animation setup
@@ -105,7 +107,7 @@ function leaveCard(e: MouseEvent) {
         <h3>{{ product.title }}</h3>
         <p>{{ product.subtitle }}</p>
         <div class="tag-row product-card__tags">
-          <span v-for="tag in product.tags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
+          <span v-for="tag in safeTags.slice(0, 3)" :key="tag" class="tag">{{ tag }}</span>
         </div>
         <div class="product-card__footer">
           <div class="product-card__price">

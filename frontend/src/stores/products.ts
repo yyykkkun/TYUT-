@@ -206,9 +206,9 @@ export const useProductStore = defineStore('products', () => {
     addBrowseHistory(id).catch(() => {})
   }
 
-  function patchFilters(next: Partial<ProductFilters>) {
+  async function patchFilters(next: Partial<ProductFilters>) {
     filters.value = { ...filters.value, ...next, page: next.page ?? 1 }
-    loadProducts()
+    await loadProducts()
   }
 
   return {

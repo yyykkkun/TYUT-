@@ -2,6 +2,7 @@ package com.tyut.mall.controller;
 
 import com.tyut.mall.common.ApiResponse;
 import com.tyut.mall.common.UserContext;
+import com.tyut.mall.dto.request.PublishProductRequest;
 import com.tyut.mall.dto.response.ReviewVO;
 import com.tyut.mall.entity.Order;
 import com.tyut.mall.entity.OrderItem;
@@ -11,6 +12,7 @@ import com.tyut.mall.repository.OrderRepository;
 import com.tyut.mall.repository.ProductSkuRepository;
 import com.tyut.mall.repository.UserRepository;
 import com.tyut.mall.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +49,18 @@ public class ProductController {
     public ApiResponse<?> detail(@PathVariable Long id) {
         Long userId = UserContext.getUserId();
         return ApiResponse.ok(productService.detail(id, userId));
+    }
+
+    @GetMapping("/my")
+    public ApiResponse<?> mine() {
+        Long userId = getUserId();
+        return ApiResponse.ok(productService.mine(userId));
+    }
+
+    @PostMapping
+    public ApiResponse<?> publish(@Valid @RequestBody PublishProductRequest request) {
+        Long userId = getUserId();
+        return ApiResponse.ok(productService.publish(userId, request));
     }
 
     @GetMapping("/hot")
@@ -106,5 +120,13 @@ public class ProductController {
                     .build());
         }
         return ApiResponse.ok(reviews);
+    }
+
+    private Long getUserId() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new RuntimeException("未登录");
+        }
+        return userId;
     }
 }

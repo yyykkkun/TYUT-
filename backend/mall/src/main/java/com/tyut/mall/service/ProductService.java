@@ -1,5 +1,6 @@
 package com.tyut.mall.service;
 
+import com.tyut.mall.dto.request.PublishProductRequest;
 import com.tyut.mall.dto.response.ProductPageVO;
 import com.tyut.mall.dto.response.ProductVO;
 
@@ -14,4 +15,6 @@ public interface ProductService {
     List<ProductVO> latest();
     List<ProductVO> special();
     List<ProductVO> recommended(Long userId);
+    List<ProductVO> mine(Long userId);
+    ProductVO publish(Long userId, PublishProductRequest request);
 }

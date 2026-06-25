@@ -14,5 +14,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     List<Product> findByPromotionAndStatus(String promotion, Integer status);
 
+    List<Product> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
+
     List<Product> findByCategoryIdAndStatusAndIdNotOrderBySalesDesc(Long categoryId, Integer status, Long excludeId);
 }
